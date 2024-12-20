@@ -1,0 +1,99 @@
+Prompt
+####################
+Je veux créer un site web de planification de roadtrip
+
+Voici le cahier des charges :
+- Présence d'un module de connexion pour accéder au compte utilisateur
+- L'utilisateur pourra créer, modifier ou supprimer un roadtrip
+- Un roadtrip peut-être composé d'une ou plusieurs étapes (avec nuitée incluant hébergement et activités) et/ou d'arrêts (sans nuitée, escale, point d'intérêt, point de passage)
+
+- En terme de modèle de données, une étape peut englober un ou plusieurs arrêts
+- Les hébergements et les activités sont considérés comme des arrêts
+- Un roadtrip contiendra les informations suivantes :
+	- Nom du voyage (obligatoire)
+	- Nombre de jours (obligatoire)
+	- Un lieu de départ
+	- Un lieu d'arrivée
+	- Date (obligatoire) et heure (facultative) de début du voyage
+	- Date (obligatoire) et heure (facultative) de fin du voyage
+	- Une devise monétaire (par défaut : EUR)
+	- Un champ Notes
+	- Liste de fichiers rattachés avec possibilité d'ajout ou de suppression de fichier
+	
+- Une étape contiendra les informations suivantes :
+	- Nom de l'étape
+	- Adresse de l'étape
+	- Nombre de nuitées
+	- Date et heure d'arrivée
+	- Date et heure de départ
+	- Un champ Notes
+	- Liste de fichiers rattachés avec possibilité d'ajout ou de suppression de fichier
+	- Liste de photos rattachées avec possibilité d'ajout ou de suppression de fichier
+	- Lien avec un ou plusieurs hébergements
+	- Lien avec une ou plusieurs activités
+
+- Un arrêt contiendra les informations suivantes :
+	- Nom de l'arrêt
+	- Adresse de l'arrêt
+	- Site web
+	- Téléphone
+	- Adresse email
+	- Date et heure d'arrivée
+	- Date et heure de départ
+	- Durée (en minutes, en heures ou en journées)
+	- N° de réservation
+	- Prix
+	- Un champ Notes
+	- Liste de fichiers rattachés avec possibilité d'ajout ou de suppression de fichier
+	- Liste de photos rattachées avec possibilité d'ajout ou de suppression de fichier
+	
+- Contraintes techniques :
+	- Utilisation HTML / CSS / Javascript / Node.js
+	- Utilisation de bootstrap
+	- Utilisation de mongoDB pour la gestion Back Office
+
+Dans un premier temps, aides-moi à modéliser la base de données 
+
+
+
+
+Interface
+####################
+Je pense avoir défini les routes et les controlleurs principaux
+Passons désormais à l'interface de mon application
+Je souhaite utiliser bootstrap et toutes les librairies CSS/JS que tu jugeras pertinentes pour l'animation du site
+J'ai besoin des sections suivantes sur ma page :
+- Barre latérale gauche qui contiendra :
+     - Un bouton de création de roadtrip
+     - La liste des roadtrips de l'utilisateur connecté
+- Header qui part du bord droit de la barre latérale gauche jusqu'à la largeur droite de l'écran
+     - Sur la droite du header, un module de connexion avec :
+          - Un bouton de connexion/déconnexion
+          - Un bouton Mon compte lors que l'utilisateur est connecté
+          - Un bouton d'accès aux notifications
+- Sous ce header, une section horizontale qui recevra le titre du roadtrip sélectionné dans la barre latérale gauche
+- Sous cette section horizontale, une nouvelle section horizontale qui recevra :
+   - Un sélecteur de jour qui permettra de naviguer d'étapes en étapes
+   - Un bouton de création d'étapes
+- Sous cette section horizontale, la section principale qui accueillera la liste des étapes du roadtrip sélectionné
+   - La sélection d'une étape scindera la section principale en 2 parties :
+		- Sur la gauche, toujours la liste des étapes du roadtrip sélectionné*
+		- Sur la droite, le détail de l'étape sélectionnée qui contiendra :
+			- Les informations principales de l'étape
+			- Les hébergements liés à l'étape
+			- Les activités liées à l'étape
+		
+Proposes moi une maquette pour préparer la page principale
+Utilises un thème sobre, agréable et cohérent entre les différents éléments
+
+
+####################
+Chargement des roadtrips
+Après connexion, au chargement de /home, je souhaite récupérer la liste des roadtrips de l'utilisateur (/roadtrips) et afficher la liste de ces roadtrips (roadtrip.name) dans la barre latérale gauche
+
+####################
+Sélection d'un roadtrip
+La sélection d'un roadtrip doit déclencher les actions suviantes :
+- Récupération des informations du roadtrip (GET /roadtrips/:id)
+- Modification du titre <Titre du Roadtrip> par le nom  du roadtrip (name)
+- Mise à jour de la liste des étapes dans la section principale avec le nom de l'étape

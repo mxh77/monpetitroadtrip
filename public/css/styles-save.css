@@ -1,0 +1,128 @@
+#logout-btn {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+/* Style pour le roadtrip sélectionné */
+.nav-item.selected {
+    background-color: rgb(43, 183, 226);
+}
+
+/* Désactiver le changement de couleur au survol des liens */
+.nav-item .nav-link {
+    color: inherit;
+    /* Utiliser la couleur héritée */
+    text-decoration: none;
+    /* Supprimer la décoration de texte */
+}
+
+.nav-item .nav-link:hover {
+    color: inherit;
+    /* Utiliser la couleur héritée au survol */
+    background-color: rgb(194, 198, 199);
+    text-decoration: none;
+    /* Supprimer la décoration de texte au survol */
+}
+
+.nav-item.nav-item.selected .nav-link:hover {
+    color: inherit;
+    /* Utiliser la couleur héritée au survol */
+    background-color: rgb(43, 183, 226);
+    text-decoration: none;
+    /* Supprimer la décoration de texte au survol */
+}
+
+#day-selector {
+    font-size: 1.2rem;
+}
+
+#day-selector button {
+    font-size: 1.2rem;
+    padding: 0.5rem 1rem;
+}
+
+#current-day {
+    font-weight: bold;
+}
+
+/* Ajoutez ce CSS à votre fichier CSS ou dans une balise <style> dans votre HTML */
+/* Ajoutez ce CSS à votre fichier CSS ou dans une balise <style> dans votre HTML */
+#stage-list-section,#stage-details-section {
+    cursor: pointer;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+#stage-list-section,#stage-details-section .nav-link{
+    cursor: pointer;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+#stage-details-section .nav-link:hover {
+    background-color: #e9ecef;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#stage-details-section .nav-link i {
+    float: right;
+    transition: transform 0.3s;
+}
+
+#stage-details-section .nav-link[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+#create-stage-btn {
+    padding: 10px;
+}
+/* Ajoutez ce CSS à votre fichier CSS ou dans une balise <style> dans votre HTML */
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group.d-flex {
+    display: flex;
+    align-items: center;
+}
+
+.form-group.d-flex label {
+    margin-right: 10px;
+    min-width: 150px; /* Ajustez cette valeur selon vos besoins */
+}
+
+.form-group.d-flex input,
+.form-group.d-flex textarea {
+    flex: 1;
+}
+
+.form-group.d-flex .d-flex {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.form-group.d-flex .d-flex input[type="date"],
+.form-group.d-flex .d-flex input[type="time"] {
+    max-width: 150px;
+}
+
+.form-group.d-flex .d-flex input[type="date"] {
+    margin-right: 10px;
+}
+
+/* Ajoutez ce CSS à votre fichier CSS ou dans une balise <style> dans votre HTML */
+.nights-input {
+    width: 75px; /* Ajustez cette valeur selon vos besoins */
+}

@@ -1,0 +1,847 @@
+:root {
+    --background-color: #f8f9fa;
+    --border-color: #8B4513;
+    --hover-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: Tahoma;
+    margin: 0;
+    padding: 0;
+    background-color: #fff9ed;
+    /* Beige sable */
+}
+
+.parent {
+    display: grid;
+    grid-template-areas:
+        "sidebar title title"
+        "sidebar nav nav"
+        "sidebar main-left main-right";
+    grid-template-columns: 350px 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    height: 100vh;
+    gap: 5px;
+    padding: 10px;
+}
+
+/*******************/
+/******SIDEBAR******/
+/*******************/
+.sidebar-section {
+    grid-area: sidebar;
+    background-color: #F5DEB3;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar-section h4 {
+    text-transform: uppercase;
+    font-variant: small-caps;
+}
+
+.sidebar-section button {
+    margin: 25px 0;
+    width: 100%;
+}
+
+.roadtrip-container {
+    width: 100%;
+    border: 1px solid #8B4513;
+    /* Brun terre */
+    border-radius: 5px;
+    padding: 20px 0px;
+    position: relative;
+    margin-top: 20px;
+}
+
+.roadtrip-title {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #F5DEB3;
+    /* Beige sable */
+    padding: 0px;
+    font-size: 1em;
+    width: 150px;
+    text-align: center;
+    color: #333;
+}
+
+#roadtrips-list {
+    list-style: none;
+    padding: 0px;
+    margin: 0px;
+    width: 100%;
+    text-align: left;
+}
+
+#roadtrips-list li {
+    font-size: 0.9em;
+    padding: 10px;
+    margin: 0px;
+    cursor: pointer;
+
+}
+
+#roadtrips-list li a {
+    text-decoration: none;
+    color: #333;
+    cursor: pointer;
+}
+
+.selected-roadtrip {
+    background-color: #ffea8a;
+    /* Couleur de surbrillance pour l'étape */
+    font-weight: bold;
+}
+
+/*************************/
+/******TITLE SECTION******/
+/*************************/
+.title-section {
+    grid-area: title;
+    background-color: #87CEEB;
+    /* Bleu ciel */
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+.title-section h1 {
+    margin: 0;
+    text-align: center;
+    width: 100%;
+}
+
+.title-section ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 30px;
+    position: absolute;
+    right: 20px;
+}
+
+.title-section ul li {
+    display: inline;
+}
+
+.title-section ul li a {
+    text-decoration: none;
+    color: #333;
+    font-size: 1.2em;
+}
+
+/*************************/
+/******MENU SECTION*******/
+/*************************/
+/* .menu-section {
+    grid-area: menu;
+    background-color: #98FB98;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+.menu-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 10px;
+}
+
+.menu-section ul li {
+    margin-bottom: 10px;
+}
+
+.menu-section ul li a {
+    text-decoration: none;
+    color: #2E8B57;   
+    font-size: 1em;
+    transition: color 0.3s;
+}
+
+.menu-section ul li a:hover {
+    color: #0056b3;
+} */
+
+/*************************/
+/******NAV SECTION********/
+/*************************/
+.nav-section {
+    grid-area: nav;
+    background-color: #87CEEB;
+    /* Bleu ciel */
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+.nav-section button {
+    background-color: #2E8B57;
+    /* Vert forêt */
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.nav-section button:hover {
+    background-color: #0056b3;
+}
+
+.nav-section span {
+    margin: 0 10px;
+    font-size: 1.2em;
+}
+
+.calendar {
+    height: 100%;
+    grid-area: main-left;
+    background-color: #F5DEB3;
+    /* Beige sable */
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    overflow-y: auto;
+    transition: all 0.3s;
+    /* Transition pour l'agrandissement */
+}
+
+/*****************************/
+/******MAIN LEFT SECTION******/
+/*****************************/
+.main-left-section {
+    grid-area: main-left;
+    background-color: #F5DEB3;
+    /* Beige sable */
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    overflow-y: auto;
+    transition: all 0.3s;
+    /* Transition pour l'agrandissement */
+}
+
+.main-left-section .main-left-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.main-left-section h4 {
+    margin-top: 0;
+}
+
+
+#create-stop-btn {
+    padding: 10px 10px;
+}
+
+#create-stage-btn {
+    padding: 10px 10px;
+}
+
+
+.main-left-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.main-left-section ul li {
+    margin-bottom: 10px;
+}
+
+#steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+    /* Ajouter un espace entre le titre et la liste */
+    width: 100%;
+    cursor: pointer;
+
+}
+
+#steps-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    border: 1px solid #8B4513;
+    border-radius: 5px;
+    padding-right: 10px;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Ajouter une ombre pour le relief */
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+#steps-list li:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Ombre plus prononcée au survol */
+    transform: translateY(-2px);
+    /* Légère translation vers le haut au survol */
+}
+
+#steps-list li a {
+    text-decoration: none;
+    color: #333;
+}
+
+#steps-list li.selected-step {
+    background-color: #ffea8a;
+    /* Couleur de surbrillance pour l'étape */
+    font-weight: bold;
+}
+
+.step-dates {
+    font-size: 0.8em;
+    font-style: italic;
+    margin-left: auto;
+}
+
+.step-travel-time {
+    font-size: 0.8em;
+    font-style: italic;
+    margin-left: auto;
+}
+
+/******************************/
+/******MAIN RIGHT SECTION******/
+/******************************/
+.main-right-section {
+    grid-area: main-right;
+    background-color: #F5DEB3;
+    /* Beige sable */
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    overflow-y: auto;
+    transition: all 2s;
+    /* Transition pour le masquage */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+}
+
+.main-right-section-header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    /* Ajouter un espace entre le header et le contenu */
+}
+
+.main-right-section-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.main-right-section-header h4 {
+    margin: 0;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    /* Espacement entre les icônes */
+}
+
+.button-group .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.button-group i {
+    font-size: 1.5em;
+    /* Augmenter la taille des icônes */
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Ajouter une ombre légère */
+}
+
+#save-step {
+    color: #007bff;
+}
+
+#save-step:hover {
+    background-color: #e0f0ff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Ombre plus prononcée au survol */
+}
+
+#delete-step {
+    color: #dc3545;
+}
+
+#delete-step:hover {
+    background-color: #ffe0e0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Ombre plus prononcée au survol */
+}
+
+.main-right-section .nav-link {
+    padding: 10px;
+    border: 1px solid #8B4513;
+    /* Brun terre */
+    border-radius: 5px;
+    margin-bottom: 5px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.main-right-section #stage-details-info {
+    cursor: pointer;
+}
+
+.main-right-section .nav-link:hover {
+    background-color: #e9ecef;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.main-right-section .nav-link i {
+    float: right;
+    transition: transform 0.3s;
+}
+
+.main-right-section .nav-link[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+.main-right-section #stage-info-form {
+    margin-left: 30px;
+}
+
+.main-right-section .form-group {
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.main-right-section .form-group label {
+    flex: 0 0 150px;
+    /* Largeur fixe pour les labels */
+    margin-bottom: 0;
+}
+
+.main-right-section .form-group input,
+.main-right-section .form-group label{
+    width: 30%;
+    font-size: 0.8em;
+}
+
+.main-right-section .form-group select {
+    width: 80%;
+    font-size: 0.8em;
+}
+
+.main-right-section .form-group textarea {
+    width: 100%;
+    font-size: 0.8em;
+}
+
+.main-right-section .form-group .d-flex {
+    display: flex;
+}
+
+.main-right-section .form-group .form-control .d-flex input {
+    flex: 1;
+}
+
+/* Style spécifique pour l'input avec la classe address-autocomplete */
+.main-right-section .form-group .address-autocomplete {
+    width: 100%;
+    /* Assurez-vous que le champ prend toute la largeur disponible */
+}
+
+.position-relative {
+    position: relative;
+}
+
+.suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.suggestions-list.visible {
+    display: block;
+}
+
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover {
+    background-color: #f0f0f0;
+}
+
+.main-right-section .form-group .date-input {
+    min-width: 0;
+    width: 150px;
+    /* Ajustez cette valeur selon vos besoins */
+}
+
+.main-right-section .form-group .time-input {
+    width: 120px;
+    /* Ajustez cette valeur selon vos besoins */
+}
+
+.main-right-section .form-group .nights-input {
+    width: 70px;
+    /* Ajuster la largeur de l'input pour le nombre de nuits */
+}
+
+.main-right-section .form-group .price-input {
+    width: 150px;
+    /* Ajuster la largeur de l'input pour le nombre de nuits */
+}
+
+#stage-details-accommodations .fas.fa-bed,
+#stage-details-accommodations .fas.fa-running {
+    margin-right: 8px;
+    /* Ajouter une marge à droite de l'icône */
+}
+
+#stage-details,
+#stop-details {
+    list-style: none;
+    display: flex;
+    padding: 0;
+    margin: 10px 0 0 0;
+    /* Ajouter un espace entre le titre et la liste */
+    width: 100%;
+    cursor: pointer;
+
+}
+
+#stage-details>li,
+#stop-details>li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    border: 1px solid #8B4513;
+    border-radius: 5px;
+    padding-right: 10px;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Ajouter une ombre pour le relief */
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+#stage-details>li:hover,
+#stop-details>li:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Ombre plus prononcée au survol */
+    transform: translateY(-2px);
+    /* Légère translation vers le haut au survol */
+}
+
+#stage-details>ul>li,
+#stop-details>ul>li {
+    /* Ombre plus prononcée au survol */
+    margin-top: 5px;
+    margin-left: 15px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid #8B4513;
+    /* Légère translation vers le haut au survol */
+}
+
+#stage-details>ul>li:hover,
+#stop-details>ul>li:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Ombre plus prononcée au survol */
+    /* Légère translation vers le haut au survol */
+}
+
+#stage-details li a,
+#stop-details li a {
+    text-decoration: none;
+    color: #333;
+}
+
+
+#stage-details-accommodations,
+#stage-details-activities {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    /* Couleur de fond pour le conteneur des hébergements */
+    border-radius: 5px;
+}
+
+#stage-details-accommodations div,
+#stage-details-activities div {
+    font-size: 1em;
+    margin-bottom: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: default;
+    /* Désactive le curseur pointeur */
+}
+
+#stage-details-accommodations div i,
+#stage-details-activities div i {
+    margin-right: 0px;
+    /* Espace entre l'icône et le texte */
+}
+
+.accommodation-item[aria-expanded="true"]>div>div i,
+.activity-item[aria-expanded="true"]>div>div i {
+    transform: rotate(90deg);
+    /* Espace entre l'icône et le texte */
+}
+
+#add-accommodation,
+#add-activity {
+    background-color: #2E8B57;
+    border: none;
+    color: white;
+    padding: 0px;
+    font-size: 0.9em;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    /* Centre le contenu verticalement */
+    justify-content: center;
+    /* Centre le contenu horizontalement */
+
+}
+
+.delete-accommodation-btn {
+    color: #dc3545;
+}
+
+.delete-accommodation-btn:hover {
+    background-color: #ffe0e0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Ombre plus prononcée au survol */
+}
+
+
+.delete-activity-btn {
+    color: #dc3545;
+}
+
+.delete-activity-btn:hover {
+    background-color: #ffe0e0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Ombre plus prononcée au survol */
+}
+
+
+#accommodations-list,
+#activities-list {
+    list-style-type: none;
+    /* Supprime les puces de la liste */
+    padding: 0;
+    margin: 0;
+}
+
+#accommodations-list details,
+#activities-list details {
+    padding: 5px 0px 10px 30px;
+    border-bottom: 1px solid #ddd;
+    /* Ligne de séparation entre les éléments */
+}
+
+#accommodations-list details:last-child,
+#activities-list details:last-child {
+    border-bottom: none;
+    /* Supprime la ligne de séparation pour le dernier élément */
+}
+
+#accommodations-list summary,
+#activities-list summary {
+    cursor: pointer;
+}
+
+#accommodations-list details[open] summary,
+#activities-list details[open] summary {
+    background-color: #ffea8a;
+    /* Couleur de surbrillance pour l'étape */
+    font-weight: bold;
+}
+
+#accommodations-list form,
+#activities-list form {
+    margin-top: 10px;
+}
+
+#accommodations-list .form-group,
+#activities-list .form-group {
+    margin-bottom: 10px;
+}
+
+#accommodations-list .form-group label,
+#activities-list .form-group label {
+    width: 150px;
+}
+
+#accommodations-list .form-group .duration-input,
+#activities-list .form-group .duration-input {
+    width: 150px;
+    height: 38px;
+}
+
+#accommodations-list .form-group .typeduration-select,
+#activities-list .form-group .typeduration-select {
+    width: 120px;
+}
+
+
+/* Ajoutez ce style pour aligner le bouton de suppression avec le nom de l'hébergement */
+details summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+details summary span {
+    flex-grow: 1;
+}
+
+details summary i {
+    padding: 0 0px;
+}
+
+details summary button {
+    margin-left: 0px;
+}
+
+details[open] summary~* {
+    animation: sweep 0.3s ease-in-out;
+}
+
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: #212529;
+    font-size: 0.9em;
+
+}
+
+.table th,
+.table td {
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+}
+
+.table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody + tbody {
+    border-top: 2px solid #dee2e6;
+}
+
+.table .thead-dark th {
+    color: #fff;
+    background-color: #343a40;
+    border-color: #454d55;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.table-bordered {
+    border: 1px solid #dee2e6;
+}
+
+.table-bordered th,
+.table-bordered td {
+    border: 1px solid #dee2e6;
+}
+
+.table-bordered thead th,
+.table-bordered thead td {
+    border-bottom-width: 2px;
+}
+
+@keyframes sweep {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+
+/* Ajoutez ce CSS à votre fichier CSS principal */
+.chevron {
+    transition: transform 0.3s ease;
+}
+
+.chevron.open {
+    transform: rotate(90deg);
+}
+
+.nav-link.d-flex.justify-content-between.align-items-center {
+    cursor: pointer;
+}
+
+.nav-link.d-flex.justify-content-between.align-items-center div:last-child {
+    margin-left: auto;
+}
+
+
+
+.hidden {
+    display: none;
+    /* Masquer l'élément */
+}
+
+.expanded {
+    grid-column: span 2;
+    /* Agrandir l'élément pour occuper deux colonnes */
+}
