@@ -1,7 +1,8 @@
 // public/js/auth.js
+import config from './config.js';
 
 export function checkAuthStatus(logoutBtn) {
-    fetch('/auth/status')
+    fetch(`${config.backendUrl}/auth/status`)
         .then(response => response.json())
         .then(data => {
             if (data.isAuthenticated) {
