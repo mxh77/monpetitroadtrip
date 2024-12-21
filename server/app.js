@@ -45,7 +45,7 @@ app.use('/activities', auth, activityRoutes);
 app.use('/gm', auth, googleMapsRoutes);
 
 // Route pour servir index.html
-app.get(`${config.backendUrl}/home`, auth, (req, res) => {
+app.get('/home', auth, (req, res) => {
     console.log('Route /home called');
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
