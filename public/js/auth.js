@@ -11,3 +11,15 @@ export function checkAuthStatus(logoutBtn) {
         })
         .catch(error => console.error('Error:', error));
 }
+
+export function logout() {
+    fetch(`${config.backendUrl}/auth/logout`)
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/auth/login'; // Redirige vers la page de login après la déconnexion
+            } else {
+                console.error('Logout failed');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
