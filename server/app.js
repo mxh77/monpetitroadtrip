@@ -34,7 +34,7 @@ app.use(cookieParser());
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'https://mxh77.github.io', // Remplacez par l'URL de votre frontend
+  origin: 'https://mxh77.github.io/monpetitroadtrip/', // Remplacez par l'URL de votre frontend
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
 }));
