@@ -10,7 +10,7 @@ const ActivitySchema = new Schema({
     phone: { type: String, default: '' },
     email: { type: String, default: '' },
     startDateTime: { type: Date },
-    endDateTime: { type: Date },
+    endDateTime: { type: Date }, 
     duration: { type: Number, default: 0 },
     typeDuration: {
         type: String,

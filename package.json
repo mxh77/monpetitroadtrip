@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node server/app.js"
+    "start": "node server/app.js",
+    "deploy": "gh-pages -d public"
   },
   "keywords": [],
   "author": "",
@@ -24,9 +25,14 @@
     "mongoose": "^8.7.1",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.15",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
+    "gh-pages": "^5.0.0",
     "nodemon": "^3.1.7"
-  }
+  },
+  "homepage": "https://mxh77.github.io/monpetitroadtrip"
 }
