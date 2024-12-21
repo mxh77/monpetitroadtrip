@@ -2,9 +2,10 @@
 
 import { updateUIWithRoadtripData, updateUIWithSelectedElements } from './ui.js';
 import { setCurrentRoadtripId, getCurrentRoadtripId } from './handleGlobals.js';
+import config from './config.js';
 
 export function fetchRoadtrips(selectRoadtrip) {
-    fetch('/roadtrips', {
+    fetch(`${config.backendUrl}/roadtrips`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -55,7 +56,7 @@ export function selectRoadtrip(event) {
     setCurrentRoadtripId(roadtripId);
 
     // Récupérer les informations du roadtrip
-    return fetch(`/roadtrips/${getCurrentRoadtripId()}`, {
+    return fetch(`${config.backendUrl}/roadtrips/${getCurrentRoadtripId()}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
