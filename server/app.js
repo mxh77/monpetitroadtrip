@@ -4,14 +4,14 @@ import cookieParser from 'cookie-parser';
 import axios from 'axios';
 import path from 'path';
 import auth from './middleware/auth.js';
-import authRoutes from './routes/authRoutes';
-import roadtripRoutes from './routes/roadtripRoutes';
-import stageRoutes from './routes/stageRoutes';
-import stopRoutes from './routes/stopRoutes';
-import accommodationRoutes from './routes/accommodationRoutes';
-import activityRoutes from './routes/activityRoutes';
-import googleMapsRoutes from './routes/googleMapsRoutes';
-import connectDB from './config/db';
+import authRoutes from './routes/authRoutes.js';
+import roadtripRoutes from './routes/roadtripRoutes.js';
+import stageRoutes from './routes/stageRoutes.js';
+import stopRoutes from './routes/stopRoutes.js';
+import accommodationRoutes from './routes/accommodationRoutes.js';
+import activityRoutes from './routes/activityRoutes.js';
+import googleMapsRoutes from './routes/googleMapsRoutes.js';
+import connectDB from './config/db.js';
 
 const app = express();
 
