@@ -1,10 +1,12 @@
 import express from 'express';
-import auth from '../middleware/auth.js';
+import { auth } from '../middleware/auth.js';
 import * as roadtripController from '../controllers/roadtripController.js';
 import * as stageController from '../controllers/stageController.js';
 import * as stopController from '../controllers/stopController.js';
 import * as accommodationController from '../controllers/accommodationController.js';
 import * as activityController from '../controllers/activityController.js';
+
+
 
 const router = express.Router();
 

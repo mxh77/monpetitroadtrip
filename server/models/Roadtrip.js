@@ -1,8 +1,9 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+import mongoose from 'mongoose';
 
-const roadtripSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+const { Schema } = mongoose;
+
+const roadtripSchema = new Schema({
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
     days: { type: Number, required: true },
     startLocation: { type: String, default: '' },
@@ -12,10 +13,8 @@ const roadtripSchema = new mongoose.Schema({
     currency: { type: String, default: 'EUR' },
     notes: { type: String, default: '' },
     files: [String],
-    stages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Stage' }],
-    stops: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Stop' }]
+    stages: [{ type: Schema.Types.ObjectId, ref: 'Stage' }],
+    stops: [{ type: Schema.Types.ObjectId, ref: 'Stop' }]
 });
 
-
-
-module.exports = mongoose.model('Roadtrip', roadtripSchema);
+export default mongoose.model('Roadtrip', roadtripSchema);

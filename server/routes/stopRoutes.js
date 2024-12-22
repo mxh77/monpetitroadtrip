@@ -1,6 +1,6 @@
 import express from 'express';
 import { check, validationResult } from 'express-validator';
-import auth from '../middleware/auth.js';
+import { auth } from '../middleware/auth.js';
 import * as stopController from '../controllers/stopController.js';
 
 const router = express.Router();

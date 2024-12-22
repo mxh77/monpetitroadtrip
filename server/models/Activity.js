@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+import mongoose from 'mongoose';
+
+const { Schema } = mongoose;
 
 const ActivitySchema = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -27,5 +28,4 @@ const ActivitySchema = new Schema({
     photos: { type: [String] }
 });
 
-
-module.exports = mongoose.model('Activity', ActivitySchema);
+export default mongoose.model('Activity', ActivitySchema);

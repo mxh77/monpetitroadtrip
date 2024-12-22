@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+import mongoose from 'mongoose';
+const { Schema } = mongoose;
 
-const AccommodationSchema = new Schema({
+export const AccommodationSchema = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     stageId: { type: Schema.Types.ObjectId, ref: 'Stage', required: true },
     name: { type: String, required: true },
@@ -20,5 +20,4 @@ const AccommodationSchema = new Schema({
     photos: { type: [String] }
 });
 
-
-module.exports = mongoose.model('Accommodation', AccommodationSchema);
+export default mongoose.model('Accommodation', AccommodationSchema);

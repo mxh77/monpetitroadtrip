@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 
 // Fonction pour calculer le score de Wilson
@@ -47,7 +47,7 @@ async function getAddressFromCoordinates(lat, lon) {
     }
 }
 
-exports.getTrailsByAddress = async (req, res) => {
+export const getTrailsByAddress = async (req, res) => {
     try {
         const address = req.query.address;
         const radius = req.query.radius || 15000;
@@ -133,7 +133,7 @@ exports.getTrailsByAddress = async (req, res) => {
 };
 
 
-exports.getDirections = async (req, res) => {
+export const getDirections = async (req, res) => {
     try {
         const { origin, destination, waypoints } = req.query;
         const apiKey = process.env.GOOGLE_MAPS_API_KEY; // Assurez-vous que votre clé API est stockée dans les variables d'environnement

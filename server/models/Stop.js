@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+import mongoose from 'mongoose';
+
+const { Schema } = mongoose;
 
 const StopSchema = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -28,5 +29,4 @@ const StopSchema = new Schema({
     photos: { type: [String] }
 });
 
-
-module.exports = mongoose.model('Stop', StopSchema);
+export default mongoose.model('Stop', StopSchema);

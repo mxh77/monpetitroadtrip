@@ -4,40 +4,55 @@ import { checkAuthStatus } from './auth.js';
 import { fetchRoadtrips, selectRoadtrip } from './roadtrip.js';
 import { showStepsList, updateStep, deleteStep, showCreateStepForm } from './step.js';
 import { initializeSections, uniqueDays, updateDaySelector } from './ui.js';
-import { autocompleteAddressInput, updateUIWithSelectedElements } from './ui.js';
+import { autocompleteAddressInput } from './ui.js';
 import { confirmDeleteAccommodation } from './accommodation.js';
 import { confirmDeleteActivity } from './activity.js';
 import { showTimeline } from './timeline.js';
 import { showCalendar } from './calendar.js';
 import { showGantt } from './gantt.js';
 import { showItinerary } from './itinerary.js';
-import { fetchReviews } from './googleMaps.js';
-import { fetchTrails } from './googleMaps.js';
+import { fetchReviews, fetchTrails } from './googleMaps.js';
+
 
 let currentDayIndex = 0;
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log('index.js loaded');
 
-    // Afficher le bouton de déconnexion si l'utilisateur est connecté
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        checkAuthStatus(logoutBtn);
-    }
+    // Vérifiez l'état d'authentification de l'utilisateur
+    checkAuthStatus().then(() => {
+        // Initialiser l'état des sections au chargement de la page
+        initializeSections();
 
-    // Initialiser l'état des sections au chargement de la page
-    initializeSections();
+        // Chargement des roadtrips de l'utilisateur connecté
+        fetchRoadtrips(selectRoadtrip);
 
-    // Chargement des roadtrips de l'utilisateur connecté
-    fetchRoadtrips(selectRoadtrip);
-
-    // Attacher les gestionnaires d'événements
-    // Appelez cette fonction une fois pour initialiser la délégation d'événements
-    initializeClickDelegation();
-    initializeInputDelegation();
-
+        // Attacher les gestionnaires d'événements
+        initializeClickDelegation();
+        initializeInputDelegation();
+    });
 });
 
+export function logout() {
+    // Votre code pour gérer la déconnexion
+    fetch('/auth/logout', {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.href = '/auth/login';
+        } else {
+            console.error('Logout failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error during logout:', error);
+    });
+}
+
+// Assurez-vous que la fonction logout est accessible globalement
+window.logout = logout;
 
 //Fonction pour intialiser la délégation d'événements pour click sur un élément
 export function initializeClickDelegation() {
@@ -205,6 +220,16 @@ export function initializeInputDelegation() {
     });
 }
 
+// Fonction pour initialiser la carte
+function initMap() {
+    const mapOptions = {
+        center: { lat: -34.397, lng: 150.644 },
+        zoom: 8
+    };
+    const map = new google.maps.Map(document.getElementById('map'), mapOptions);
+}
 
+// Assurez-vous que la fonction initMap est accessible globalement
+window.initMap = initMap;
 
 

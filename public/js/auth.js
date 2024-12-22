@@ -1,15 +1,20 @@
 // public/js/auth.js
-export function checkAuthStatus(logoutBtn) {
-    fetch('/auth/status')
-        .then(response => response.json())
-        .then(data => {
-            if (data.isAuthenticated) {
-                logoutBtn.style.display = 'block';
-            }
-        })
-        .catch(error => console.error('Error:', error));
+export function checkAuthStatus() {
+    return fetch('/auth/status', {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.isAuthenticated) {
+            window.location.href = '/auth/login';
+        }
+    })
+    .catch(error => {
+        console.error('Error checking auth status:', error);
+        window.location.href = '/auth/login';
+    });
 }
-
 export function logout() {
     fetch('/auth/logout')
         .then(response => {

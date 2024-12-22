@@ -1,9 +1,9 @@
-const Activity = require('../models/Activity');
-const Stage = require('../models/Stage');
-const Roadtrip = require('../models/Roadtrip');
+import Activity from '../models/Activity.js';
+import Stage from '../models/Stage.js';
+import Roadtrip from '../models/Roadtrip.js';
 
 // Méthode pour créer une nouvelle activité pour une étape donnée
-exports.createActivityForStage = async (req, res) => {
+export const createActivityForStage = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
         const stage = await Stage.findById(req.params.idStage);
@@ -60,7 +60,7 @@ exports.createActivityForStage = async (req, res) => {
 };
 
 // Méthode pour mettre à jour une activité
-exports.updateActivity = async (req, res) => {
+export const updateActivity = async (req, res) => {
     try {
         const activity = await Activity.findById(req.params.idActivity);
 
@@ -102,7 +102,7 @@ exports.updateActivity = async (req, res) => {
 };
 
 //Méthode pour obtenir les informations d'une activité
-exports.getActivityById = async (req, res) => {
+export const getActivityById = async (req, res) => {
     try {
         const activity = await Activity.findById(req.params.idActivity);
 
@@ -123,7 +123,7 @@ exports.getActivityById = async (req, res) => {
 };
 
 //Méthode pour supprimer une activité
-exports.deleteActivity = async (req, res) => {
+export const deleteActivity = async (req, res) => {
     try {
         const activity = await Activity.findById(req.params.idActivity);
 

@@ -1,9 +1,7 @@
-const Roadtrip = require('../models/Roadtrip');
-const Stage = require('../models/Stage');
-const Stop = require('../models/Stop');
+import Roadtrip from '../models/Roadtrip.js';
 
 // Méthode pour créer un roadtrip
-exports.createRoadtrip = async (req, res) => {
+export const createRoadtrip = async (req, res) => {
     try {
         const newRoadtrip = new Roadtrip({
             userId: req.user.id,
@@ -31,7 +29,7 @@ exports.createRoadtrip = async (req, res) => {
 };
 
 //Méthode pour mettre à jour un roadtrip
-exports.updateRoadtrip = async (req, res) => {
+export const updateRoadtrip = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
@@ -71,7 +69,7 @@ exports.updateRoadtrip = async (req, res) => {
 };
 
 // Méthode pour récupérer les roadtrips d'un user
-exports.getUserRoadtrips = async (req, res) => {
+export const getUserRoadtrips = async (req, res) => {
     try {
         const roadtrips = await Roadtrip.find({ userId: req.user.id })
         .populate('stages')
@@ -99,7 +97,7 @@ exports.getUserRoadtrips = async (req, res) => {
 };
 
 // Méthode pour récupérer un roadtrip
-exports.getRoadtripById = async (req, res) => {
+export const getRoadtripById = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip)
             .populate('stages')
@@ -137,7 +135,7 @@ exports.getRoadtripById = async (req, res) => {
 };
 
 // Méthode pour supprimer un roadtrip
-exports.deleteRoadtrip = async (req, res) => {
+export const deleteRoadtrip = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 

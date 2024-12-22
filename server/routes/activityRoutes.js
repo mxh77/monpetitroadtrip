@@ -1,7 +1,6 @@
 import express from 'express';
-import { check, validationResult } from 'express-validator';
-import auth from '../middleware/auth.js';
-import activityController from '../controllers/activityController.js';
+import { auth } from '../middleware/auth.js';
+import * as activityController from '../controllers/activityController.js';
 
 const router = express.Router();
 

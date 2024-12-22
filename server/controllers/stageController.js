@@ -1,13 +1,13 @@
-const Roadtrip = require('../models/Roadtrip');
-const Stage = require('../models/Stage');
-const Stop = require('../models/Stop');
-const Accommodation = require('../models/Accommodation');
-const Activity = require('../models/Activity');
-const { calculateTravelTime } = require('../utils/googleMapsUtils');
+import Roadtrip from '../models/Roadtrip.js';
+import Stage from '../models/Stage.js';
+import Stop from '../models/Stop.js';
+import Accommodation from '../models/Accommodation.js';
+import Activity from '../models/Activity.js';
+import { calculateTravelTime } from '../utils/googleMapsUtils.js';
 
 
 // Méthode pour créer une nouvelle étape pour un roadtrip donné
-exports.createStageForRoadtrip = async (req, res) => {
+export const createStageForRoadtrip = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
@@ -68,7 +68,7 @@ exports.createStageForRoadtrip = async (req, res) => {
 };
 
 // Méthode pour mettre à jour une étape
-exports.updateStage = async (req, res) => {
+export const updateStage = async (req, res) => {
     try {
         const stage = await Stage.findById(req.params.idStage);
 
@@ -166,7 +166,7 @@ exports.updateStage = async (req, res) => {
 };
 
 // Méthode pour obtenir les informations de toutes les étapes d'un roadtrip
-exports.getStagesByRoadtrip = async (req, res) => {
+export const getStagesByRoadtrip = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip)
             .populate({
@@ -201,7 +201,7 @@ exports.getStagesByRoadtrip = async (req, res) => {
 };
 
 // Méthode pour obtenir les informations d'une étape
-exports.getStageById = async (req, res) => {
+export const getStageById = async (req, res) => {
     try {
         const stage = await Stage.findById(req.params.idStage)
             .populate('accommodations')
@@ -233,7 +233,7 @@ exports.getStageById = async (req, res) => {
 };
 
 //Méthode pour supprimer une étape
-exports.deleteStage = async (req, res) => {
+export const deleteStage = async (req, res) => {
     try {
         const stage = await Stage.findById(req.params.idStage);
 

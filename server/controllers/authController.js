@@ -1,18 +1,14 @@
-require('dotenv').config(); // Charger les variables d'environnement
+import dotenv from 'dotenv';
+dotenv.config();
 
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-
-/*
-console.log('process.env.EMAIL:', process.env.EMAIL);
-console.log('process.env.EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD);
-*/
+import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 
 // Configurer le transporteur de mail
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
         user: process.env.EMAIL,
@@ -21,7 +17,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Méthode pour l'inscription
-exports.register = async (req, res) => {
+export const register = async (req, res) => {
     const { username, email, password } = req.body;
 
     try {
@@ -59,7 +55,7 @@ exports.register = async (req, res) => {
 };
 
 // Méthode pour la connexion
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
@@ -97,13 +93,13 @@ exports.login = async (req, res) => {
 };
 
 // Méthode pour la déconnexion
-exports.logout = (req, res) => {
+export const logout = (req, res) => {
     res.clearCookie('token');
     res.redirect('/auth/login');
 };
 
 // Méthode pour demander la réinitialisation du mot de passe
-exports.forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     try {
@@ -143,7 +139,7 @@ Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail
 };
 
 // Méthode pour réinitialiser le mot de passe
-exports.resetPassword = async (req, res) => {
+export const resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 

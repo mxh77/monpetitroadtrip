@@ -1,9 +1,9 @@
 import express from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import axios from 'axios';
 import path from 'path';
-import auth from './middleware/auth.js';
+import { fileURLToPath } from 'url';
+import { auth } from './middleware/auth.js';
 import authRoutes from './routes/authRoutes.js';
 import roadtripRoutes from './routes/roadtripRoutes.js';
 import stageRoutes from './routes/stageRoutes.js';
@@ -11,9 +11,13 @@ import stopRoutes from './routes/stopRoutes.js';
 import accommodationRoutes from './routes/accommodationRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
 import googleMapsRoutes from './routes/googleMapsRoutes.js';
-import connectDB from './config/db.js';
+import {connectDB} from './config/db.js';
 
 const app = express();
+
+// Convertir l'URL du module en chemin de fichier
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Connect to database
 connectDB();
@@ -29,9 +33,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+
+// Serve static files
+app.use(express.static(path.join(__dirname, '../public')));
+
 // View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views')); // Configure le répertoire des vues
+
+// Route pour servir login.html
+app.get('/auth/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/login.html'));
+});
 
 // Routes
 app.use('/auth', authRoutes);
@@ -45,7 +58,7 @@ app.use('/gm', auth, googleMapsRoutes);
 // Route pour servir index.html
 app.get('/home', auth, (req, res) => {
     console.log('Route /home called');
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    res.sendFile(path.resolve(path.join(__dirname, '../public/index.html')));
 });
 
 // Rediriger vers /home si l'utilisateur est connecté
@@ -80,8 +93,6 @@ app.get('/autocomplete', async (req, res) => {
     }
   });
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '../public')));
 
 // Start server
 const PORT = process.env.PORT || 3001;

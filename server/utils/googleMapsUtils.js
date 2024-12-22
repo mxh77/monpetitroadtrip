@@ -1,7 +1,7 @@
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 // Fonction pour calculer le temps de trajet entre deux adresses
-exports.calculateTravelTime = async (origin, destination) => {
+export const calculateTravelTime = async (origin, destination) => {
     if (!origin || !destination) {
         throw new Error('Origin and destination must be provided');
     }
@@ -20,4 +20,4 @@ exports.calculateTravelTime = async (origin, destination) => {
     } else {
         throw new Error('No route found');
     }
-}
+};

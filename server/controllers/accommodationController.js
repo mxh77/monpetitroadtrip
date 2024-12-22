@@ -1,9 +1,10 @@
-const Accommodation = require('../models/Accommodation');
-const Stage = require('../models/Stage');
-const Roadtrip = require('../models/Roadtrip');
+import Accommodation from '../models/Accommodation.js';
+import Stage from '../models/Stage.js';
+import Roadtrip from '../models/Roadtrip.js';
 
 // Méthode pour créer un nouvel hébergement pour une étape donnée
-exports.createAccommodationForStage = async (req, res) => {
+//format ES6
+export const createAccommodationForStage = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
         const stage = await Stage.findById(req.params.idStage);
@@ -56,7 +57,7 @@ exports.createAccommodationForStage = async (req, res) => {
 };
 
 // Méthode pour mettre à jour un hébergement
-exports.updateAccommodation = async (req, res) => {
+export const updateAccommodation = async (req, res) => {
     try {
         const accommodation = await Accommodation.findById(req.params.idAccommodation);
 
@@ -100,7 +101,7 @@ exports.updateAccommodation = async (req, res) => {
 };
 
 //Méthode pour obtenir les informations d'un hébergement
-exports.getAccommodationById = async (req, res) => {
+export const getAccommodationById = async (req, res) => {
     try {
         const accommodation = await Accommodation.findById(req.params.idAccommodation);
 
@@ -121,7 +122,7 @@ exports.getAccommodationById = async (req, res) => {
 };
 
 //Méthode pour supprimer un hébergement
-exports.deleteAccommodation = async (req, res) => {
+export const deleteAccommodation = async (req, res) => {
     try {
         const accommodation = await Accommodation.findById(req.params.idAccommodation);
 

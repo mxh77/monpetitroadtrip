@@ -1,5 +1,5 @@
 import express from 'express';
-import auth from '../middleware/auth.js';
+import { auth } from '../middleware/auth.js';
 import { updateStage, getStageById, deleteStage } from '../controllers/stageController.js';
 
 const router = express.Router();

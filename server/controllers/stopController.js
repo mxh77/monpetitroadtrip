@@ -1,10 +1,10 @@
-const Stage = require('../models/Stage');
-const Stop = require('../models/Stop');
-const Roadtrip = require('../models/Roadtrip');
-const { calculateTravelTime } = require('../utils/googleMapsUtils');
+import Stage from '../models/Stage.js';
+import Stop from '../models/Stop.js';
+import Roadtrip from '../models/Roadtrip.js';
+import { calculateTravelTime } from '../utils/googleMapsUtils.js';
 
 // Méthode pour créer un nouvel arrêt pour un roadtrip donné
-exports.createStopForRoadtrip = async (req, res) => {
+export const createStopForRoadtrip = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
@@ -68,7 +68,7 @@ exports.createStopForRoadtrip = async (req, res) => {
 
 
 // Méthode pour mettre à jour un arrêt
-exports.updateStop = async (req, res) => {
+export const updateStop = async (req, res) => {
     try {
         const stop = await Stop.findById(req.params.idStop);
 
@@ -136,7 +136,7 @@ exports.updateStop = async (req, res) => {
 };
 
 //Méthode pour obtenir les informations d'un arrêt
-exports.getStopById = async (req, res) => {
+export const getStopById = async (req, res) => {
     try {
         const stop = await Stop.findById(req.params.idStop);
 
@@ -157,7 +157,7 @@ exports.getStopById = async (req, res) => {
 };
 
 //Méthode pour supprimer un arrêt
-exports.deleteStop = async (req, res) => {
+export const deleteStop = async (req, res) => {
     try {
         const stop = await Stop.findById(req.params.idStop);
 
@@ -187,3 +187,4 @@ exports.deleteStop = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
