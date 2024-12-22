@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Attacher les gestionnaires d'événements
         initializeClickDelegation();
         initializeInputDelegation();
+
+               // Charger dynamiquement le script Google Maps
+               loadGoogleMapsScript();
     });
 });
 
@@ -220,8 +223,18 @@ export function initializeInputDelegation() {
     });
 }
 
+// Fonction pour charger dynamiquement le script Google Maps
+function loadGoogleMapsScript() {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBYC-Mamm9LrqrbBPR7jcZ1ZnnwWiRIXQw&callback=initMap&libraries=places&v=${new Date().getTime()}`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+}
+
 // Fonction pour initialiser la carte
 function initMap() {
+    console.log('Google Maps API loaded');
     const mapOptions = {
         center: { lat: -34.397, lng: 150.644 },
         zoom: 8
