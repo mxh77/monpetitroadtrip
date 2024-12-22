@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
+import auth from '../middleware/auth.js';
+import * as accommodationController from '../controllers/accommodationController.js';
+
 const router = express.Router();
-const { check, validationResult } = require('express-validator');
-const auth = require('../middleware/auth');
-const accommodationController = require('../controllers/accommodationController');
 
 /********METHOD PUT ********/
 //route pour modifier un hébergement
@@ -16,4 +16,4 @@ router.get('/:idAccommodation', auth, accommodationController.getAccommodationBy
 // Route protégée pour supprimer un hébergement
 router.delete('/:idAccommodation', auth, accommodationController.deleteAccommodation);
 
-module.exports = router;
+export default router;
