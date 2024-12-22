@@ -4,13 +4,38 @@ let map;
 
 // Fonction pour initialiser la carte Google Maps
 export function initMap() {
-    map = new google.maps.Map(document.getElementById('googleMaps'), {
-        zoom: 6,
-        center: { lat: 48.8566, lng: 2.3522 } // Centre initial de la carte (Paris)
-    });
+    if (!map) {
+        map = new google.maps.Map(document.getElementById('googleMaps'), {
+            zoom: 6,
+            center: { lat: 48.8566, lng: 2.3522 } // Centre initial de la carte (Paris)
+        });
+
+        // Forcer le redessin de la carte
+        google.maps.event.trigger(map, 'resize');
+    }
 }
 
+// Assurez-vous que la fonction initMap est accessible globalement
 window.initMap = initMap;
+
+// Fonction pour charger dynamiquement le script Google Maps
+function loadGoogleMapsScript() {
+    return new Promise((resolve, reject) => {
+        // Vérifier si le script Google Maps est déjà chargé
+        if (document.querySelector(`script[src*="maps.googleapis.com/maps/api/js"]`)) {
+            resolve();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBYC-Mamm9LrqrbBPR7jcZ1ZnnwWiRIXQw&callback=initMap&libraries=places&v=${new Date().getTime()}`;
+        script.async = true;
+        script.defer = true;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
 
 // Fonction pour appeler l'API Google Directions via le serveur
 async function getDirections(origin, destination, waypoints) {
@@ -93,8 +118,13 @@ export async function showItinerary() {
         googleMapsDiv.style.width = '100%';
         mainLeftSection.appendChild(googleMapsDiv);
 
-        // Initialiser la carte Google Maps
-        initMap();
+        // Charger dynamiquement le script Google Maps et initialiser la carte
+        await loadGoogleMapsScript();
+
+        // Forcer le redessin de la carte après le chargement du script
+        google.maps.event.addListenerOnce(map, 'idle', () => {
+            google.maps.event.trigger(map, 'resize');
+        });
 
         // Afficher l'itinéraire sur la carte Google Maps
         displayItineraryOnMap(segments);

@@ -31,8 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
         initializeClickDelegation();
         initializeInputDelegation();
 
-               // Charger dynamiquement le script Google Maps
-               loadGoogleMapsScript();
     });
 });
 
@@ -42,16 +40,16 @@ export function logout() {
         method: 'GET',
         credentials: 'same-origin'
     })
-    .then(response => {
-        if (response.ok) {
-            window.location.href = '/auth/login';
-        } else {
-            console.error('Logout failed');
-        }
-    })
-    .catch(error => {
-        console.error('Error during logout:', error);
-    });
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/auth/login';
+            } else {
+                console.error('Logout failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error during logout:', error);
+        });
 }
 
 // Assurez-vous que la fonction logout est accessible globalement
@@ -207,7 +205,7 @@ export function initializeClickDelegation() {
             } else {
                 alert('Veuillez entrer une adresse.');
             }
-        }        
+        }
 
     });
 }
@@ -222,27 +220,4 @@ export function initializeInputDelegation() {
         }
     });
 }
-
-// Fonction pour charger dynamiquement le script Google Maps
-function loadGoogleMapsScript() {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBYC-Mamm9LrqrbBPR7jcZ1ZnnwWiRIXQw&callback=initMap&libraries=places&v=${new Date().getTime()}`;
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-}
-
-// Fonction pour initialiser la carte
-function initMap() {
-    console.log('Google Maps API loaded');
-    const mapOptions = {
-        center: { lat: -34.397, lng: 150.644 },
-        zoom: 8
-    };
-    const map = new google.maps.Map(document.getElementById('map'), mapOptions);
-}
-
-// Assurez-vous que la fonction initMap est accessible globalement
-window.initMap = initMap;
-
 
