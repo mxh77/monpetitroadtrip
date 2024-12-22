@@ -1,17 +1,17 @@
-const express = require('express');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const axios = require('axios'); // Importer axios
-const path = require('path');
-const auth = require('./middleware/auth');
-const authRoutes = require('./routes/authRoutes');
-const roadtripRoutes = require('./routes/roadtripRoutes');
-const stageRoutes = require('./routes/stageRoutes');
-const stopRoutes = require('./routes/stopRoutes');
-const accommodationRoutes = require('./routes/accommodationRoutes');
-const activityRoutes = require('./routes/activityRoutes');
-const googleMapsRoutes = require('./routes/googleMapsRoutes');
-const connectDB = require('./config/db');
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import axios from 'axios';
+import path from 'path';
+import auth from './middleware/auth';
+import authRoutes from './routes/authRoutes';
+import roadtripRoutes from './routes/roadtripRoutes';
+import stageRoutes from './routes/stageRoutes';
+import stopRoutes from './routes/stopRoutes';
+import accommodationRoutes from './routes/accommodationRoutes';
+import activityRoutes from './routes/activityRoutes';
+import googleMapsRoutes from './routes/googleMapsRoutes';
+import connectDB from './config/db';
 
 const app = express();
 
