@@ -1,8 +1,6 @@
 // public/js/auth.js
-import config from './config.js';
-
 export function checkAuthStatus(logoutBtn) {
-    fetch(`${config.backendUrl}/auth/status`)
+    fetch('/auth/status')
         .then(response => response.json())
         .then(data => {
             if (data.isAuthenticated) {
@@ -13,7 +11,7 @@ export function checkAuthStatus(logoutBtn) {
 }
 
 export function logout() {
-    fetch(`${config.backendUrl}/auth/logout`)
+    fetch('/auth/logout')
         .then(response => {
             if (response.ok) {
                 window.location.href = '/auth/login'; // Redirige vers la page de login après la déconnexion

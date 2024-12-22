@@ -1,5 +1,3 @@
-import config from './config.js';
-
 console.log('login.js loaded');
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -17,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            fetch(`${config.backendUrl}/auth/login`, {
+            fetch('/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -56,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const email = forgotEmail.value;
             console.log('Email entered:', email);
 
-            fetch(`${config.backendUrl}/auth/forgot-password`, {
+            fetch('/auth/forgot-password', {
             method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
