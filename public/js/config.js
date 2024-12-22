@@ -1,5 +1,5 @@
 const config = {
-    backendUrl: 'https://mon-petit-roadtrip.vercel.app'
+    backendUrl: ''
 };
 
 export default config;
