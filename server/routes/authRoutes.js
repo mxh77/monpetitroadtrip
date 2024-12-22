@@ -1,7 +1,11 @@
-const express = require('express');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import authController from '../controllers/authController.js';
+
 const router = express.Router();
-const authController = require('../controllers/authController');
-const path = require('path');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Route pour afficher le formulaire de connexion
 router.get('/login', (req, res) => {
@@ -40,4 +44,4 @@ router.get('/reset-password/:token', (req, res) => {
     `);
 });
 
-module.exports = router;
+export default router;

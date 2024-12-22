@@ -1,9 +1,8 @@
-const express = require('express');
+import express from 'express';
+import googleMapsController from '../controllers/googleMapsController.js';
+
 const router = express.Router();
-const googleMapsController = require('../controllers/googleMapsController');
-
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
-
 
 // Route pour obtenir les sentiers de randonnée autour d'une adresse
 router.get('/trails', googleMapsController.getTrailsByAddress);
@@ -40,4 +39,4 @@ router.get('/steps/reviews', async (req, res) => {
 // Route pour obtenir les directions
 router.get('/directions', googleMapsController.getDirections);
 
-module.exports = router;
+export default router;

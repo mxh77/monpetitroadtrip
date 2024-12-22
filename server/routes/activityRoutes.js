@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { check, validationResult } from 'express-validator';
+import auth from '../middleware/auth.js';
+import activityController from '../controllers/activityController.js';
+
 const router = express.Router();
-const { check, validationResult } = require('express-validator');
-const auth = require('../middleware/auth');
-const activityController= require('../controllers/activityController');
 
 /********METHOD PUT ********/
 //route pour modifier un hébergement
@@ -16,4 +17,4 @@ router.get('/:idActivity', auth, activityController.getActivityById);
 // Route protégée pour supprimer un hébergement
 router.delete('/:idActivity', auth, activityController.deleteActivity);
 
-module.exports = router;
+export default router;

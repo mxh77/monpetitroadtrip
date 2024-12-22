@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { check, validationResult } from 'express-validator';
+import auth from '../middleware/auth.js';
+import * as stopController from '../controllers/stopController.js';
+
 const router = express.Router();
-const { check, validationResult } = require('express-validator');
-const auth = require('../middleware/auth');
-const stopController = require('../controllers/stopController');
 
 /********METHOD PUT ********/
 //route pour modifier un arrêt
@@ -16,4 +17,4 @@ router.get('/:idStop', auth, stopController.getStopById);
 // Route protégée pour supprimer un arrêt
 router.delete('/:idStop', auth, stopController.deleteStop);
 
-module.exports = router;
+export default router;

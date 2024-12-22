@@ -1,11 +1,12 @@
-const express = require('express');
+import express from 'express';
+import auth from '../middleware/auth.js';
+import * as roadtripController from '../controllers/roadtripController.js';
+import * as stageController from '../controllers/stageController.js';
+import * as stopController from '../controllers/stopController.js';
+import * as accommodationController from '../controllers/accommodationController.js';
+import * as activityController from '../controllers/activityController.js';
+
 const router = express.Router();
-const auth = require('../middleware/auth');
-const roadtripController = require('../controllers/roadtripController');
-const stageController = require('../controllers/stageController');
-const stopController = require('../controllers/stopController');
-const accommodationController = require('../controllers/accommodationController');
-const activityController = require('../controllers/activityController');
 
 /***************************/
 /********METHOD POST********/
@@ -25,15 +26,11 @@ router.post('/:idRoadtrip/stages/:idStage/accommodations', auth, accommodationCo
 // Route protégée pour créer une activité liée à une étape de roadtrip
 router.post('/:idRoadtrip/stages/:idStage/activities', auth, activityController.createActivityForStage);
 
-
-
 /***************************/
 /********METHOD PUT*********/
 /***************************/
 // Route protégée pour modifier un roadtrip
 router.put('/:idRoadtrip', auth, roadtripController.updateRoadtrip);
-
-
 
 /***************************/
 /********METHOD GET*********/
@@ -47,12 +44,10 @@ router.get('/:idRoadtrip', auth, roadtripController.getRoadtripById);
 // Route protégée pour obtenir les étapes d'un roadtrip spécifique
 router.get('/:idRoadtrip/stages', auth, stageController.getStagesByRoadtrip);
 
-
-
 /***************************/
 /********METHOD DELETE******/
 /***************************/
 // Route protégée pour supprimer un roadtrip
 router.delete('/:idRoadtrip', auth, roadtripController.deleteRoadtrip);
 
-module.exports = router;
+export default router;
