@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import axios from 'axios';
 import path from 'path';
-import auth from './middleware/auth';
+import auth from './middleware/auth.js';
 import authRoutes from './routes/authRoutes';
 import roadtripRoutes from './routes/roadtripRoutes';
 import stageRoutes from './routes/stageRoutes';
