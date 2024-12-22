@@ -2,6 +2,7 @@
   "name": "roadtrip-planner",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node server/app.js",
     "deploy:all": "git add . && git commit -m \"Update deployment\" && git push && vercel --prod"
