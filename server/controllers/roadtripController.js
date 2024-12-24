@@ -13,6 +13,8 @@ export const createRoadtrip = async (req, res) => {
             endLocation: req.body.endLocation,
             endDate: req.body.endDate,
             endTime: req.body.endTime,
+            startDateTime: req.body.startDateTime,
+            endDateTime: req.body.endDateTime,
             currency: req.body.currency,
             notes: req.body.notes,
             files: req.body.files,
@@ -28,9 +30,12 @@ export const createRoadtrip = async (req, res) => {
     }
 };
 
-//Méthode pour mettre à jour un roadtrip
+// Méthode pour mettre à jour un roadtrip
 export const updateRoadtrip = async (req, res) => {
     try {
+        
+        console.log('Données reçues pour la mise à jour:', req.body);
+        
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
         if (!roadtrip) {
@@ -42,24 +47,23 @@ export const updateRoadtrip = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        const updatedRoadtrip = {
-            name: req.body.name,
-            days: req.body.days,
-            startLocation: req.body.startLocation,
-            startDate: req.body.startDate,
-            startTime: req.body.startTime,
-            endLocation: req.body.endLocation,
-            endDate: req.body.endDate,
-            endTime: req.body.endTime,
-            currency: req.body.currency,
-            notes: req.body.notes
-        };
+        // Mettre à jour les champs du roadtrip
+        roadtrip.name = req.body.name || roadtrip.name;
+        roadtrip.days = req.body.days || roadtrip.days;
+        roadtrip.startLocation = req.body.startLocation || roadtrip.startLocation;
+        roadtrip.startDate = req.body.startDate || roadtrip.startDate;
+        roadtrip.startTime = req.body.startTime || roadtrip.startTime;
+        roadtrip.endLocation = req.body.endLocation || roadtrip.endLocation;
+        roadtrip.endDate = req.body.endDate || roadtrip.endDate;
+        roadtrip.endTime = req.body.endTime || roadtrip.endTime;
+        roadtrip.startDateTime = req.body.startDateTime || roadtrip.startDateTime;
+        roadtrip.endDateTime = req.body.endDateTime || roadtrip.endDateTime;
+        roadtrip.currency = req.body.currency || roadtrip.currency;
+        roadtrip.notes = req.body.notes || roadtrip.notes;
+        roadtrip.stages = req.body.stages || roadtrip.stages;
+        roadtrip.stops = req.body.stops || roadtrip.stops;
 
-        const roadtripUpdated = await Roadtrip.findByIdAndUpdate(
-            req.params.idRoadtrip,
-            { $set: updatedRoadtrip },
-            { new: true }
-        ).populate('stages').populate('stops');
+        const roadtripUpdated = await roadtrip.save();
 
         res.json(roadtripUpdated);
     } catch (err) {
