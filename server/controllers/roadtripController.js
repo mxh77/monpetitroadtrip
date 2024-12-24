@@ -1,18 +1,26 @@
 import Roadtrip from '../models/Roadtrip.js';
 
+// Fonction pour calculer le nombre de jours entre deux dates
+const calculateDays = (startDateTime, endDateTime) => {
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+};
+
 // Méthode pour créer un roadtrip
 export const createRoadtrip = async (req, res) => {
     try {
+
+        const days = calculateDays(req.body.startDateTime, req.body.endDateTime);
+
         const newRoadtrip = new Roadtrip({
             userId: req.user.id,
             name: req.body.name,
-            days: req.body.days,
+            days: days,
             startLocation: req.body.startLocation,
-            startDate: req.body.startDate,
-            startTime: req.body.startTime,
             endLocation: req.body.endLocation,
-            endDate: req.body.endDate,
-            endTime: req.body.endTime,
             startDateTime: req.body.startDateTime,
             endDateTime: req.body.endDateTime,
             currency: req.body.currency,
@@ -33,9 +41,9 @@ export const createRoadtrip = async (req, res) => {
 // Méthode pour mettre à jour un roadtrip
 export const updateRoadtrip = async (req, res) => {
     try {
-        
+
         console.log('Données reçues pour la mise à jour:', req.body);
-        
+
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
         if (!roadtrip) {
@@ -47,15 +55,13 @@ export const updateRoadtrip = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
+        const days = calculateDays(req.body.startDateTime, req.body.endDateTime);
+
         // Mettre à jour les champs du roadtrip
         roadtrip.name = req.body.name || roadtrip.name;
-        roadtrip.days = req.body.days || roadtrip.days;
+        roadtrip.days = days;
         roadtrip.startLocation = req.body.startLocation || roadtrip.startLocation;
-        roadtrip.startDate = req.body.startDate || roadtrip.startDate;
-        roadtrip.startTime = req.body.startTime || roadtrip.startTime;
         roadtrip.endLocation = req.body.endLocation || roadtrip.endLocation;
-        roadtrip.endDate = req.body.endDate || roadtrip.endDate;
-        roadtrip.endTime = req.body.endTime || roadtrip.endTime;
         roadtrip.startDateTime = req.body.startDateTime || roadtrip.startDateTime;
         roadtrip.endDateTime = req.body.endDateTime || roadtrip.endDateTime;
         roadtrip.currency = req.body.currency || roadtrip.currency;
@@ -76,22 +82,22 @@ export const updateRoadtrip = async (req, res) => {
 export const getUserRoadtrips = async (req, res) => {
     try {
         const roadtrips = await Roadtrip.find({ userId: req.user.id })
-        .populate('stages')
-        .populate('stops')
-        .populate({
-            path: 'stages',
-            populate: {
-                path: 'accommodations',
-                model: 'Accommodation'
-            }
-        })
-        .populate({
-            path: 'stages',
-            populate: {
-                path: 'activities',
-                model: 'Activity'
-            }
-        });
+            .populate('stages')
+            .populate('stops')
+            .populate({
+                path: 'stages',
+                populate: {
+                    path: 'accommodations',
+                    model: 'Accommodation'
+                }
+            })
+            .populate({
+                path: 'stages',
+                populate: {
+                    path: 'activities',
+                    model: 'Activity'
+                }
+            });
 
         res.json(roadtrips);
     } catch (err) {
