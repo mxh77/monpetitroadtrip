@@ -4,14 +4,30 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv';
+import fs from 'fs';
+
+// Charger les variables d'environnement depuis le fichier .env
+dotenv.config();
 
 // Obtenir le répertoire courant
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Créer un répertoire temporaire si nécessaire
+const tmpDir = path.join(__dirname, 'tmp');
+console.log('tmpDir:', tmpDir);
+if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir);
+}
+
+// Créer un fichier temporaire avec le contenu de la variable d'environnement
+const keyFilePath = path.join(tmpDir, 'gcs-keyfile.json');
+fs.writeFileSync(keyFilePath, process.env.GOOGLE_CLOUD_KEYFILE_CONTENT);
+
 // Configuration de Google Cloud Storage
 const storage = new Storage({
-    keyFilename: process.env.GOOGLE_CLOUD_KEYFILE, // Utilisez une variable d'environnement pour le chemin du fichier de clé
+    keyFilename: keyFilePath, // Utilisez le fichier temporaire
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID // Utilisez une variable d'environnement pour l'ID du projet
 });
 
