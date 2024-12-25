@@ -11,8 +11,8 @@ const __dirname = path.dirname(__filename);
 
 // Configuration de Google Cloud Storage
 const storage = new Storage({
-    keyFilename: path.join(__dirname, '../../config/lithe-augury-437207-h6-4d4c600e3f5c.json'), // Remplacez par le chemin vers votre fichier de clé de compte de service
-    projectId: 'lithe-augury-437207-h6-4d4c600e3f5c' // Remplacez par votre ID de projet
+    keyFilename: process.env.GOOGLE_CLOUD_KEYFILE, // Utilisez une variable d'environnement pour le chemin du fichier de clé
+    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID // Utilisez une variable d'environnement pour l'ID du projet
 });
 
 const bucket = storage.bucket('monpetitroadtrip'); // Remplacez par le nom de votre bucket
@@ -133,7 +133,7 @@ export const uploadRoadtripPhotos = async (req, res) => {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
         if (!roadtrip) {
-            return res.status(404).json({ msg: 'Roadtrip non trouvé' });
+            return res.status(404).json({ msg: 'Roadtrip not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip
@@ -159,7 +159,7 @@ export const deleteRoadtripPhoto = async (req, res) => {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
         if (!roadtrip) {
-            return res.status(404).json({ msg: 'Roadtrip non trouvé' });
+            return res.status(404).json({ msg: 'Roadtrip not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip
@@ -172,7 +172,7 @@ export const deleteRoadtripPhoto = async (req, res) => {
             await deleteFromGCS(photoUrl);
         } catch (err) {
             if (err.message === 'No such object') {
-                return res.status(404).json({ msg: 'Photo non trouvée' });
+                return res.status(404).json({ msg: 'Photo not found in Google Cloud Storage' });
             } else {
                 throw err;
             }
@@ -241,7 +241,7 @@ export const getRoadtripById = async (req, res) => {
             });
 
         if (!roadtrip) {
-            return res.status(404).json({ msg: 'Roadtrip non trouvé' });
+            return res.status(404).json({ msg: 'Roadtrip not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip
@@ -263,7 +263,7 @@ export const deleteRoadtrip = async (req, res) => {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
         if (!roadtrip) {
-            return res.status(404).json({ msg: 'Roadtrip non trouvé' });
+            return res.status(404).json({ msg: 'Roadtrip not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip
