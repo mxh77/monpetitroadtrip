@@ -5,7 +5,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
-import fs from 'fs';
 
 // Charger les variables d'environnement depuis le fichier .env
 dotenv.config();
@@ -14,21 +13,21 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Créer un répertoire temporaire si nécessaire
-const tmpDir = path.join(__dirname, 'tmp');
-console.log('tmpDir:', tmpDir);
-if (!fs.existsSync(tmpDir)) {
-    fs.mkdirSync(tmpDir);
-}
-
-// Créer un fichier temporaire avec le contenu de la variable d'environnement
-const keyFilePath = path.join(tmpDir, 'gcs-keyfile.json');
-fs.writeFileSync(keyFilePath, process.env.GOOGLE_CLOUD_KEYFILE_CONTENT);
-
 // Configuration de Google Cloud Storage
 const storage = new Storage({
-    keyFilename: keyFilePath, // Utilisez le fichier temporaire
-    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID // Utilisez une variable d'environnement pour l'ID du projet
+    credentials: {
+        type: process.env.GCS_TYPE,
+        project_id: process.env.GCS_PROJECT_ID,
+        private_key_id: process.env.GCS_PRIVATE_KEY_ID,
+        private_key: process.env.GCS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        client_email: process.env.GCS_CLIENT_EMAIL,
+        client_id: process.env.GCS_CLIENT_ID,
+        auth_uri: process.env.GCS_AUTH_URI,
+        token_uri: process.env.GCS_TOKEN_URI,
+        auth_provider_x509_cert_url: process.env.GCS_AUTH_PROVIDER_X509_CERT_URL,
+        client_x509_cert_url: process.env.GCS_CLIENT_X509_CERT_URL
+    },
+    projectId: process.env.GCS_PROJECT_ID
 });
 
 const bucket = storage.bucket('monpetitroadtrip'); // Remplacez par le nom de votre bucket
