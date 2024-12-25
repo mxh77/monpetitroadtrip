@@ -13,6 +13,7 @@ const roadtripSchema = new Schema({
     currency: { type: String, default: 'EUR' },
     notes: { type: String, default: '' },
     files: [String],
+    photos: [String],
     stages: [{ type: Schema.Types.ObjectId, ref: 'Stage' }],
     stops: [{ type: Schema.Types.ObjectId, ref: 'Stop' }]
 });
