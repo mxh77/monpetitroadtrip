@@ -22,6 +22,9 @@ router.post('/:idRoadtrip/stages', auth, stageController.createStageForRoadtrip)
 // Route protégée pour créer un stop lié à un roadtrip
 router.post('/:idRoadtrip/stops', auth, stopController.createStopForRoadtrip);
 
+// Nouvelle route pour uploader des photos pour un roadtrip existant
+router.post('/:idRoadtrip/photos', auth, roadtripController.uploadPhotos, roadtripController.uploadRoadtripPhotos);
+
 // Route protégée pour créer un hébergement lié à une étape de roadtrip
 router.post('/:idRoadtrip/stages/:idStage/accommodations', auth, accommodationController.createAccommodationForStage);
 
@@ -51,9 +54,6 @@ router.get('/:idRoadtrip/stages', auth, stageController.getStagesByRoadtrip);
 /***************************/
 // Route protégée pour supprimer un roadtrip
 router.delete('/:idRoadtrip', auth, roadtripController.deleteRoadtrip);
-
-// Nouvelle route pour uploader des photos pour un roadtrip existant
-router.post('/:idRoadtrip/photos', auth, roadtripController.uploadPhotos, roadtripController.uploadRoadtripPhotos);
 
 // Nouvelle route pour supprimer une photo d'un roadtrip
 router.delete('/:idRoadtrip/photos', auth, roadtripController.deleteRoadtripPhoto);

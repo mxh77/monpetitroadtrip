@@ -1,40 +1,14 @@
 import Roadtrip from '../models/Roadtrip.js';
-import { Storage } from '@google-cloud/storage';
-import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
+import { uploadPhotos, uploadEntityPhotos, deleteEntityPhoto } from '../utils/fileUtils.js';
 
-// Charger les variables d'environnement depuis le fichier .env
 dotenv.config();
 
 // Obtenir le répertoire courant
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Configuration de Google Cloud Storage
-const storage = new Storage({
-    credentials: {
-        type: process.env.GCS_TYPE,
-        project_id: process.env.GCS_PROJECT_ID,
-        private_key_id: process.env.GCS_PRIVATE_KEY_ID,
-        private_key: process.env.GCS_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        client_email: process.env.GCS_CLIENT_EMAIL,
-        client_id: process.env.GCS_CLIENT_ID,
-        auth_uri: process.env.GCS_AUTH_URI,
-        token_uri: process.env.GCS_TOKEN_URI,
-        auth_provider_x509_cert_url: process.env.GCS_AUTH_PROVIDER_X509_CERT_URL,
-        client_x509_cert_url: process.env.GCS_CLIENT_X509_CERT_URL
-    },
-    projectId: process.env.GCS_PROJECT_ID
-});
-
-const bucket = storage.bucket('monpetitroadtrip'); // Remplacez par le nom de votre bucket
-
-// Configuration de multer pour gérer les uploads de fichiers
-const multerStorage = multer.memoryStorage();
-const upload = multer({ storage: multerStorage });
 
 // Fonction pour calculer le nombre de jours entre deux dates
 const calculateDays = (startDateTime, endDateTime) => {
@@ -43,69 +17,6 @@ const calculateDays = (startDateTime, endDateTime) => {
     const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
-};
-
-// Fonction pour uploader un fichier sur Google Cloud Storage
-const uploadToGCS = (file, roadtripId) => {
-    return new Promise((resolve, reject) => {
-        const newFileName = `${roadtripId}/${uuidv4()}-${path.extname(file.originalname)}`;
-        const blob = bucket.file(newFileName);
-        const blobStream = blob.createWriteStream({
-            resumable: false,
-            contentType: file.mimetype,
-            metadata: {
-                contentType: file.mimetype
-            }
-        });
-
-        blobStream.on('error', (err) => {
-            reject(err);
-        });
-
-        blobStream.on('finish', async () => {
-            const [url] = await blob.getSignedUrl({
-                action: 'read',
-                expires: '03-01-2500' // Vous pouvez ajuster la date d'expiration selon vos besoins
-            });
-            resolve(url);
-        });
-
-        blobStream.end(file.buffer);
-    });
-};
-
-// Fonction pour supprimer un fichier de Google Cloud Storage
-const deleteFromGCS = (fileUrl) => {
-    return new Promise((resolve, reject) => {
-        let fileName;
-        if (fileUrl.startsWith('https://storage.googleapis.com/')) {
-            fileName = fileUrl.split('/').slice(4).join('/').split('?')[0];
-        } else if (fileUrl.startsWith('https://storage.cloud.google.com/')) {
-            fileName = fileUrl.split('/').slice(4).join('/').split('?')[0];
-        } else if (fileUrl.startsWith('gs://')) {
-            fileName = fileUrl.split('/').slice(3).join('/');
-        } else {
-            return reject(new Error('Invalid URL format'));
-        }
-
-        console.log(`Deleting file: ${fileName}`);
-
-        const file = bucket.file(fileName);
-
-        file.delete((err) => {
-            if (err) {
-                console.error(`Error deleting file: ${err.message}`);
-                if (err.code === 404) {
-                    reject(new Error('No such object'));
-                } else {
-                    reject(err);
-                }
-            } else {
-                console.log(`File deleted successfully: ${fileName}`);
-                resolve();
-            }
-        });
-    });
 };
 
 // Méthode pour créer un roadtrip
@@ -142,7 +53,7 @@ export const createRoadtrip = async (req, res) => {
     }
 };
 
-// Nouvelle méthode pour uploader des photos pour un roadtrip existant
+// Méthode pour uploader des photos pour un roadtrip existant
 export const uploadRoadtripPhotos = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
@@ -156,19 +67,14 @@ export const uploadRoadtripPhotos = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        const photoUrls = await Promise.all(req.files.map(file => uploadToGCS(file, roadtrip._id)));
-
-        roadtrip.photos = roadtrip.photos.concat(photoUrls);
-        await roadtrip.save();
-
-        res.json(roadtrip);
+        await uploadEntityPhotos(req, res, roadtrip, roadtrip._id);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
     }
 };
 
-// Nouvelle méthode pour supprimer une photo d'un roadtrip
+// Méthode pour supprimer une photo d'un roadtrip
 export const deleteRoadtripPhoto = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
@@ -182,21 +88,7 @@ export const deleteRoadtripPhoto = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        const photoUrl = req.body.photoUrl;
-        try {
-            await deleteFromGCS(photoUrl);
-        } catch (err) {
-            if (err.message === 'No such object') {
-                return res.status(404).json({ msg: 'Photo not found in Google Cloud Storage' });
-            } else {
-                throw err;
-            }
-        }
-
-        roadtrip.photos = roadtrip.photos.filter(url => url !== photoUrl);
-        await roadtrip.save();
-
-        res.json(roadtrip);
+        await deleteEntityPhoto(req, res, roadtrip);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -204,7 +96,7 @@ export const deleteRoadtripPhoto = async (req, res) => {
 };
 
 // Middleware pour gérer l'upload des photos
-export const uploadPhotos = upload.array('photos', 10); // Limite à 10 fichiers
+export { uploadPhotos };
 
 // Méthode pour récupérer les roadtrips d'un user
 export const getUserRoadtrips = async (req, res) => {

@@ -4,6 +4,7 @@ import Stop from '../models/Stop.js';
 import Accommodation from '../models/Accommodation.js';
 import Activity from '../models/Activity.js';
 import { calculateTravelTime } from '../utils/googleMapsUtils.js';
+import { uploadPhotos, uploadEntityPhotos, deleteEntityPhoto } from '../utils/fileUtils.js';
 
 
 // Méthode pour créer une nouvelle étape pour un roadtrip donné
@@ -164,6 +165,66 @@ export const updateStage = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
+// Nouvelle méthode pour uploader des photos pour une étape existante
+export const uploadStagePhotos = async (req, res) => {
+    try {
+        const stage = await Stage.findById(req.params.idStage);
+
+        if (!stage) {
+            return res.status(404).json({ msg: 'Stage not found' });
+        }
+        console.log("Stage : ", stage);
+        console.log("Roadtrip ID : ", stage.roadtripId);
+        
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'étape 
+        const roadtrip = await Roadtrip.findById(stage.roadtripId);
+
+
+        if (!roadtrip) {
+            return res.status(404).json({ msg: 'Roadtrip not found' });
+        }
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip
+        if (roadtrip.userId.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        await uploadEntityPhotos(req, res, stage, 'stage');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
+// Nouvelle méthode pour supprimer une photo d'une étape
+export const deleteStagePhoto = async (req, res) => {
+    try {
+        const stage = await Stage.findById(req.params.idStage);
+
+        if (!stage) {
+            return res.status(404).json({ msg: 'Stage not found' });
+        }
+
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'étape 
+        const roadtrip = await Roadtrip.findById(stage.roadtripId);
+
+        if (!roadtrip) {
+            return res.status(404).json({ msg: 'Roadtrip not found' });
+        }
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip
+        if (roadtrip.userId.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        await deleteEntityPhoto(req, res, roadtrip);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
+// Middleware pour gérer l'upload des photos
+export { uploadPhotos };
 
 // Méthode pour obtenir les informations de toutes les étapes d'un roadtrip
 export const getStagesByRoadtrip = async (req, res) => {
