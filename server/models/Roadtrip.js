@@ -12,8 +12,9 @@ const roadtripSchema = new Schema({
     endDateTime: { type: Date }, 
     currency: { type: String, default: 'EUR' },
     notes: { type: String, default: '' },
-    files: [String],
-    photos: [String],
+    photos: [{ type: Schema.Types.ObjectId, ref: 'File' }],
+    documents: [{ type: Schema.Types.ObjectId, ref: 'File' }],
+    thumbnail: { type: Schema.Types.ObjectId, ref: 'File' },
     stages: [{ type: Schema.Types.ObjectId, ref: 'Stage' }],
     stops: [{ type: Schema.Types.ObjectId, ref: 'Stop' }]
 });

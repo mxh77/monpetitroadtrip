@@ -4,7 +4,7 @@ import Stop from '../models/Stop.js';
 import Accommodation from '../models/Accommodation.js';
 import Activity from '../models/Activity.js';
 import { calculateTravelTime } from '../utils/googleMapsUtils.js';
-import { uploadPhotos, uploadEntityPhotos, deleteEntityPhoto } from '../utils/fileUtils.js';
+import { uploadPhotos } from '../utils/fileUtils.js';
 
 
 // Méthode pour créer une nouvelle étape pour un roadtrip donné
@@ -176,7 +176,7 @@ export const uploadStagePhotos = async (req, res) => {
         }
         console.log("Stage : ", stage);
         console.log("Roadtrip ID : ", stage.roadtripId);
-        
+
         // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'étape 
         const roadtrip = await Roadtrip.findById(stage.roadtripId);
 
@@ -189,7 +189,7 @@ export const uploadStagePhotos = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        await uploadEntityPhotos(req, res, stage, 'stage');
+        //await uploadEntityPhotos(req, res, stage, 'stage');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -216,7 +216,7 @@ export const deleteStagePhoto = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        await deleteEntityPhoto(req, res, roadtrip);
+        //await deleteEntityPhoto(req, res, roadtrip);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');

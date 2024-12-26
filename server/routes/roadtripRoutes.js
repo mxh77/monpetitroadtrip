@@ -5,10 +5,14 @@ import * as stageController from '../controllers/stageController.js';
 import * as stopController from '../controllers/stopController.js';
 import * as accommodationController from '../controllers/accommodationController.js';
 import * as activityController from '../controllers/activityController.js';
-
-
+import { uploadPhotos, uploadThumbnail } from '../utils/fileUtils.js';
+import multer from 'multer';
 
 const router = express.Router();
+
+// Configuration de multer pour gérer les uploads de fichiers
+const multerStorage = multer.memoryStorage();
+const upload = multer({ storage: multerStorage });
 
 /***************************/
 /********METHOD POST********/
@@ -22,9 +26,6 @@ router.post('/:idRoadtrip/stages', auth, stageController.createStageForRoadtrip)
 // Route protégée pour créer un stop lié à un roadtrip
 router.post('/:idRoadtrip/stops', auth, stopController.createStopForRoadtrip);
 
-// Nouvelle route pour uploader des photos pour un roadtrip existant
-router.post('/:idRoadtrip/photos', auth, roadtripController.uploadPhotos, roadtripController.uploadRoadtripPhotos);
-
 // Route protégée pour créer un hébergement lié à une étape de roadtrip
 router.post('/:idRoadtrip/stages/:idStage/accommodations', auth, accommodationController.createAccommodationForStage);
 
@@ -34,8 +35,8 @@ router.post('/:idRoadtrip/stages/:idStage/activities', auth, activityController.
 /***************************/
 /********METHOD PUT*********/
 /***************************/
-// Route pour mettre à jour un roadtrip
-router.put('/:idRoadtrip', auth, roadtripController.uploadPhotos, roadtripController.uploadRoadtripPhotos);
+// Route pour mettre à jour un roadtrip avec une vignette ou des photos
+router.put('/:idRoadtrip', auth, upload.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'photos', maxCount: 10 }]), roadtripController.updateRoadtrip);
 
 /***************************/
 /********METHOD GET*********/
@@ -55,7 +56,7 @@ router.get('/:idRoadtrip/stages', auth, stageController.getStagesByRoadtrip);
 // Route protégée pour supprimer un roadtrip
 router.delete('/:idRoadtrip', auth, roadtripController.deleteRoadtrip);
 
-// Nouvelle route pour supprimer une photo d'un roadtrip
-router.delete('/:idRoadtrip/photos', auth, roadtripController.deleteRoadtripPhoto);
+// Route protégée pour supprimer un fichier spécifique
+router.delete('/:idRoadtrip/files/:fileId', auth, roadtripController.deleteFile);
 
 export default router;
