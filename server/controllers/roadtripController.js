@@ -27,7 +27,7 @@ export const createRoadtrip = async (req, res) => {
         const newRoadtrip = new Roadtrip({
             userId: req.user.id,
             name: req.body.name,
-            days: days,
+            days: days, // Calcul automatique du nombre de jours
             startLocation: req.body.startLocation,
             startDateTime: req.body.startDateTime,
             endLocation: req.body.endLocation,
@@ -40,11 +40,6 @@ export const createRoadtrip = async (req, res) => {
         });
 
         const roadtrip = await newRoadtrip.save();
-
-        const photoUrls = await Promise.all(req.files.map(file => uploadToGCS(file, roadtrip._id)));
-
-        roadtrip.photos = photoUrls;
-        await roadtrip.save();
 
         res.json(roadtrip);
     } catch (err) {
