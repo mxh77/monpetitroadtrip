@@ -248,7 +248,10 @@ export const getUserRoadtrips = async (req, res) => {
                     path: 'activities',
                     model: 'Activity'
                 }
-            });
+            })
+            .populate('photos')
+            .populate('documents')
+            .populate('thumbnail');
 
         res.json(roadtrips);
     } catch (err) {
@@ -276,7 +279,10 @@ export const getRoadtripById = async (req, res) => {
                     path: 'activities',
                     model: 'Activity'
                 }
-            });
+            })
+            .populate('photos')
+            .populate('documents')
+            .populate('thumbnail');
 
         if (!roadtrip) {
             return res.status(404).json({ msg: 'Roadtrip not found' });
