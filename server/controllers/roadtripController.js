@@ -1,11 +1,10 @@
 import Roadtrip from '../models/Roadtrip.js';
 import File from '../models/File.js';
+import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { uploadPhotos, uploadThumbnail, uploadToGCS, deleteFromGCS, uploadEntityImage } from '../utils/fileUtils.js';
+import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
 import dotenv from 'dotenv';
-import { v4 as uuidv4 } from 'uuid';
-import mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -49,7 +48,6 @@ export const createRoadtrip = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
-
 
 // Méthode pour mettre à jour un roadtrip existant
 export const updateRoadtrip = async (req, res) => {
@@ -165,10 +163,6 @@ export const updateRoadtrip = async (req, res) => {
     }
 };
 
-// Middleware pour gérer l'upload des photos
-export { uploadPhotos, uploadThumbnail };
-
-
 // Méthode pour supprimer un fichier spécifique
 export const deleteFile = async (req, res) => {
     try {
@@ -183,7 +177,7 @@ export const deleteFile = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        const fileId = req.params.fileId;
+        const fileId = mongoose.Types.ObjectId(req.params.fileId);
         const file = await File.findById(fileId);
 
         if (!file) {
@@ -197,9 +191,9 @@ export const deleteFile = async (req, res) => {
         await file.deleteOne();
 
         // Supprimer le fichier du tableau photos, documents ou thumbnail du roadtrip
-        roadtrip.photos = roadtrip.photos.filter(f => f.toString() !== fileId);
-        roadtrip.documents = roadtrip.documents.filter(f => f.toString() !== fileId);
-        if (roadtrip.thumbnail && roadtrip.thumbnail.toString() === fileId) {
+        roadtrip.photos = roadtrip.photos.filter(f => f.toString() !== fileId.toString());
+        roadtrip.documents = roadtrip.documents.filter(f => f.toString() !== fileId.toString());
+        if (roadtrip.thumbnail && roadtrip.thumbnail.toString() === fileId.toString()) {
             roadtrip.thumbnail = null;
         }
 
