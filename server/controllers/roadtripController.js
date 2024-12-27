@@ -65,26 +65,56 @@ export const updateRoadtrip = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
+        // Extraire les données JSON du champ 'data'
+        let data;
+        if (req.body.data) {
+            try {
+                data = JSON.parse(req.body.data);
+            } catch (error) {
+                return res.status(400).json({ msg: 'Invalid JSON in data field' });
+            }
+        } else {
+            return res.status(400).json({ msg: 'Missing data field' });
+        }
+
         // Mettre à jour les champs du roadtrip
-        if (req.body.startDateTime && req.body.endDateTime) {
-            const days = calculateDays(req.body.startDateTime, req.body.endDateTime);
+        if (data.startDateTime && data.endDateTime) {
+            const days = calculateDays(data.startDateTime, data.endDateTime);
             roadtrip.days = days;
         }
 
-        if (req.body.name) roadtrip.name = req.body.name;
-        if (req.body.startLocation) roadtrip.startLocation = req.body.startLocation;
-        if (req.body.startDateTime) roadtrip.startDateTime = req.body.startDateTime;
-        if (req.body.endLocation) roadtrip.endLocation = req.body.endLocation;
-        if (req.body.endDateTime) roadtrip.endDateTime = req.body.endDateTime;
-        if (req.body.currency) roadtrip.currency = req.body.currency;
-        if (req.body.notes) roadtrip.notes = req.body.notes;
-        if (req.body.stages) roadtrip.stages = req.body.stages;
-        if (req.body.stops) roadtrip.stops = req.body.stops;
+        if (data.name) roadtrip.name = data.name;
+        if (data.startLocation) roadtrip.startLocation = data.startLocation;
+        if (data.startDateTime) roadtrip.startDateTime = data.startDateTime;
+        if (data.endLocation) roadtrip.endLocation = data.endLocation;
+        if (data.endDateTime) roadtrip.endDateTime = data.endDateTime;
+        if (data.currency) roadtrip.currency = data.currency;
+        if (data.notes) roadtrip.notes = data.notes;
+        if (data.files) roadtrip.files = data.files;
+        if (data.stages) roadtrip.stages = data.stages;
+        if (data.stops) roadtrip.stops = data.stops;
 
-        // Enregistrer les modifications avant de télécharger les fichiers
-        await roadtrip.save();
+        // Gérer les suppressions différées
+        if (data.existingFiles) {
+            const existingFiles = data.existingFiles;
+            for (const file of existingFiles) {
+                if (file.isDeleted) {
+                    const fileId = mongoose.Types.ObjectId(file.fileId);
+                    const fileToDelete = await File.findById(fileId);
+                    if (fileToDelete) {
+                        await deleteFromGCS(fileToDelete.url);
+                        await fileToDelete.deleteOne();
+                        roadtrip.photos = roadtrip.photos.filter(f => f.toString() !== fileId.toString());
+                        roadtrip.documents = roadtrip.documents.filter(f => f.toString() !== fileId.toString());
+                        if (roadtrip.thumbnail && roadtrip.thumbnail.toString() === fileId.toString()) {
+                            roadtrip.thumbnail = null;
+                        }
+                    }
+                }
+            }
+        }
 
-        // Télécharger la vignette, les photos ou les documents uniquement après avoir confirmé que les modifications ont été enregistrées
+        // Télécharger les nouveaux fichiers
         if (req.files) {
             if (req.files.thumbnail) {
                 console.log('Uploading thumbnail...');
@@ -123,12 +153,11 @@ export const updateRoadtrip = async (req, res) => {
                 roadtrip.documents.push(...documents);
                 console.log('Updated roadtrip documents:', roadtrip.documents);
             }
-            await roadtrip.save();
-            console.log('Roadtrip saved with updated files:', roadtrip);
-            res.json(roadtrip);
-        } else {
-            res.json(roadtrip);
         }
+
+        await roadtrip.save();
+        console.log('Roadtrip saved with updated files:', roadtrip);
+        res.json(roadtrip);
 
     } catch (err) {
         console.error('Error updating roadtrip:', err.message);
