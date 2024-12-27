@@ -97,7 +97,7 @@ export const updateRoadtrip = async (req, res) => {
             const existingFiles = data.existingFiles;
             for (const file of existingFiles) {
                 if (file.isDeleted) {
-                    const fileId = mongoose.Types.ObjectId(file.fileId);
+                    const fileId = new mongoose.Types.ObjectId(file.fileId);
                     const fileToDelete = await File.findById(fileId);
                     if (fileToDelete) {
                         await deleteFromGCS(fileToDelete.url);
@@ -177,7 +177,7 @@ export const deleteFile = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        const fileId = mongoose.Types.ObjectId(req.params.fileId);
+        const fileId = new mongoose.Types.ObjectId(req.params.fileId);
         const file = await File.findById(fileId);
 
         if (!file) {

@@ -35,8 +35,12 @@ router.post('/:idRoadtrip/stages/:idStage/activities', auth, activityController.
 /***************************/
 /********METHOD PUT*********/
 /***************************/
-// Route pour mettre à jour un roadtrip avec une vignette ou des photos
-router.put('/:idRoadtrip', auth, upload.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'photos', maxCount: 10 }]), roadtripController.updateRoadtrip);
+// Route pour mettre à jour un roadtrip avec une vignette, des photos ou des documents
+router.put('/:idRoadtrip', auth, upload.fields([
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'photos', maxCount: 10 },
+    { name: 'documents', maxCount: 10 }
+]), roadtripController.updateRoadtrip);
 
 /***************************/
 /********METHOD GET*********/
