@@ -86,7 +86,6 @@ export const updateRoadtrip = async (req, res) => {
         if (data.endDateTime) roadtrip.endDateTime = data.endDateTime;
         if (data.currency) roadtrip.currency = data.currency;
         if (data.notes) roadtrip.notes = data.notes;
-        if (data.files) roadtrip.files = data.files;
         if (data.stages) roadtrip.stages = data.stages;
         if (data.stops) roadtrip.stops = data.stops;
 
@@ -155,11 +154,6 @@ export const updateRoadtrip = async (req, res) => {
                 roadtrip.documents.push(...documents);
                 console.log('Updated roadtrip documents:', roadtrip.documents);
             }
-        }
-
-        // Assurez-vous que le champ photos contient des ObjectIds
-        if (data.photos) {
-            roadtrip.photos = data.photos.map(photo => new mongoose.Types.ObjectId(photo));
         }
 
         await roadtrip.save();

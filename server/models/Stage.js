@@ -12,8 +12,9 @@ const stageSchema = new Schema({
     departureDateTime: { type: Date },
     travelTime: { type: Number, default: 0 },
     notes: { type: String, default: '' },
-    files: [String],
-    photos: [String],
+    photos: [{ type: Schema.Types.ObjectId, ref: 'File' }],
+    documents: [{ type: Schema.Types.ObjectId, ref: 'File' }],
+    thumbnail: { type: Schema.Types.ObjectId, ref: 'File' },
     accommodations: [{ type: Schema.Types.ObjectId, ref: 'Accommodation' }],
     activities: [{ type: Schema.Types.ObjectId, ref: 'Activity' }]
 });

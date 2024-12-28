@@ -5,7 +5,6 @@ import * as stageController from '../controllers/stageController.js';
 import * as stopController from '../controllers/stopController.js';
 import * as accommodationController from '../controllers/accommodationController.js';
 import * as activityController from '../controllers/activityController.js';
-import { uploadPhotos, uploadThumbnail } from '../utils/fileUtils.js';
 import multer from 'multer';
 
 const router = express.Router();
