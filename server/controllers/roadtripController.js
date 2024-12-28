@@ -63,16 +63,14 @@ export const updateRoadtrip = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        // Extraire les données JSON du champ 'data'
-        let data;
+        // Extraire les données JSON du champ 'data' si elles existent
+        let data = {};
         if (req.body.data) {
             try {
                 data = JSON.parse(req.body.data);
             } catch (error) {
                 return res.status(400).json({ msg: 'Invalid JSON in data field' });
             }
-        } else {
-            return res.status(400).json({ msg: 'Missing data field' });
         }
 
         // Mettre à jour les champs du roadtrip
@@ -94,12 +92,16 @@ export const updateRoadtrip = async (req, res) => {
 
         // Gérer les suppressions différées
         if (data.existingFiles) {
+            console.log('Processing existing files:', data.existingFiles);
             const existingFiles = data.existingFiles;
             for (const file of existingFiles) {
+                console.log('Processing file:', file);
                 if (file.isDeleted) {
+                    console.log('Deleting file:', file.fileId);
                     const fileId = new mongoose.Types.ObjectId(file.fileId);
                     const fileToDelete = await File.findById(fileId);
                     if (fileToDelete) {
+                        console.log('File found, deleting from GCS and database:', fileToDelete.url);
                         await deleteFromGCS(fileToDelete.url);
                         await fileToDelete.deleteOne();
                         roadtrip.photos = roadtrip.photos.filter(f => f.toString() !== fileId.toString());
@@ -107,6 +109,8 @@ export const updateRoadtrip = async (req, res) => {
                         if (roadtrip.thumbnail && roadtrip.thumbnail.toString() === fileId.toString()) {
                             roadtrip.thumbnail = null;
                         }
+                    } else {
+                        console.log('File not found:', file.fileId);
                     }
                 }
             }
@@ -129,7 +133,7 @@ export const updateRoadtrip = async (req, res) => {
                 await file.save();
                 roadtrip.thumbnail = file._id;
             }
-            if (req.files.photos) {
+            if (req.files.photos && req.files.photos.length > 0) {
                 console.log('Uploading photos...');
                 const photos = await Promise.all(req.files.photos.map(async (photo) => {
                     const url = await uploadToGCS(photo, roadtrip._id);
@@ -140,7 +144,7 @@ export const updateRoadtrip = async (req, res) => {
                 roadtrip.photos.push(...photos);
                 console.log('Updated roadtrip photos:', roadtrip.photos);
             }
-            if (req.files.documents) {
+            if (req.files.documents && req.files.documents.length > 0) {
                 console.log('Uploading documents...');
                 const documents = await Promise.all(req.files.documents.map(async (document) => {
                     const url = await uploadToGCS(document, roadtrip._id);
@@ -151,6 +155,11 @@ export const updateRoadtrip = async (req, res) => {
                 roadtrip.documents.push(...documents);
                 console.log('Updated roadtrip documents:', roadtrip.documents);
             }
+        }
+
+        // Assurez-vous que le champ photos contient des ObjectIds
+        if (data.photos) {
+            roadtrip.photos = data.photos.map(photo => new mongoose.Types.ObjectId(photo));
         }
 
         await roadtrip.save();
