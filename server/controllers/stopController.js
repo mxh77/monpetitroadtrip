@@ -1,7 +1,9 @@
 import Stage from '../models/Stage.js';
 import Stop from '../models/Stop.js';
 import Roadtrip from '../models/Roadtrip.js';
-import { calculateTravelTime } from '../utils/googleMapsUtils.js';
+import File from '../models/File.js';
+import { calculateTravelTime, getCoordinates } from '../utils/googleMapsUtils.js';
+import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
 
 // Méthode pour créer un nouvel arrêt pour un roadtrip donné
 export const createStopForRoadtrip = async (req, res) => {
@@ -34,9 +36,21 @@ export const createStopForRoadtrip = async (req, res) => {
             }
         }
 
+        // Obtenir les coordonnées géographiques à partir de l'adresse
+        let coordinates = {};
+        if (req.body.address) {
+            try {
+                coordinates = await getCoordinates(req.body.address);
+            } catch (error) {
+                console.error('Error getting coordinates:', error);
+            }
+        }
+
         const stop = new Stop({
             name: req.body.name,
             address: req.body.address,
+            latitude: coordinates.lat,
+            longitude: coordinates.lng,
             website: req.body.website,
             phone: req.body.phone,
             email: req.body.email,
@@ -47,25 +61,58 @@ export const createStopForRoadtrip = async (req, res) => {
             reservationNumber: req.body.reservationNumber,
             price: req.body.price,
             notes: req.body.notes,
-            files: req.body.files,
-            photos: req.body.photos,
             roadtripId: req.params.idRoadtrip,
             userId: req.user.id,
             travelTime: travelTime // Stocker le temps de trajet
         });
 
-        //Ajouter l'arrêt à la liste des arrêts du roadtrip
+        // Ajouter l'arrêt à la liste des arrêts du roadtrip
         roadtrip.stops.push(stop);
         await roadtrip.save();
 
         await stop.save();
-        return res.status(201).json(stop); // Utilisez return pour arrêter l'exécution après avoir envoyé la réponse
+
+        // Télécharger les nouveaux fichiers
+        if (req.files) {
+            if (req.files.thumbnail) {
+                console.log('Uploading thumbnail...');
+                const url = await uploadToGCS(req.files.thumbnail[0], stop._id);
+                const file = new File({ url, type: 'thumbnail' });
+                await file.save();
+                stop.thumbnail = file._id;
+            }
+            if (req.files.photos && req.files.photos.length > 0) {
+                console.log('Uploading photos...');
+                const photos = await Promise.all(req.files.photos.map(async (photo) => {
+                    const url = await uploadToGCS(photo, stop._id);
+                    const file = new File({ url, type: 'photo' });
+                    await file.save();
+                    return file._id;
+                }));
+                stop.photos.push(...photos);
+                console.log('Updated stop photos:', stop.photos);
+            }
+            if (req.files.documents && req.files.documents.length > 0) {
+                console.log('Uploading documents...');
+                const documents = await Promise.all(req.files.documents.map(async (document) => {
+                    const url = await uploadToGCS(document, stop._id);
+                    const file = new File({ url, type: 'document' });
+                    await file.save();
+                    return file._id;
+                }));
+                stop.documents.push(...documents);
+                console.log('Updated stop documents:', stop.documents);
+            }
+        }
+
+        await stop.save();
+
+        res.status(201).json(stop);
     } catch (err) {
         console.error(err.message);
-        return res.status(500).send('Server Error'); // Utilisez return pour arrêter l'exécution après avoir envoyé la réponse
+        res.status(500).send('Server Error');
     }
 };
-
 
 // Méthode pour mettre à jour un arrêt
 export const updateStop = async (req, res) => {
@@ -87,46 +134,133 @@ export const updateStop = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        // Récupérer le step précédent (stage ou stop) pour calculer le temps de trajet
-        const lastStage = await Stage.find({ roadtripId: roadtrip._id, arrivalDateTime: { $lt: stop.arrivalDateTime } }).sort({ arrivalDateTime: -1 }).limit(1);
-        const lastStop = await Stop.find({ roadtripId: roadtrip._id, arrivalDateTime: { $lt: stop.arrivalDateTime } }).sort({ arrivalDateTime: -1 }).limit(1);
-
-        // Combiner les résultats et trouver le step le plus proche
-        const lastSteps = [...lastStage, ...lastStop].sort((a, b) => new Date(b.arrivalDateTime) - new Date(a.arrivalDateTime));
-        const lastStep = lastSteps.length > 0 ? lastSteps[0] : null;
-
-        let travelTime = null;
-        if (lastStep) {
+        // Extraire les données JSON du champ 'data' si elles existent
+        let data = {};
+        if (req.body.data) {
             try {
-                travelTime = await calculateTravelTime(lastStep.address, req.body.address);
+                data = JSON.parse(req.body.data);
             } catch (error) {
-                console.error('Error calculating travel time:', error);
+                return res.status(400).json({ msg: 'Invalid JSON in data field' });
             }
         }
 
-        const updatedStop = {
-            name: req.body.name,
-            address: req.body.address,
-            website: req.body.website,
-            phone: req.body.phone,
-            email: req.body.email,
-            arrivalDateTime: req.body.arrivalDateTime,
-            departureDateTime: req.body.departureDateTime,
-            duration: req.body.duration,
-            typeDuration: req.body.typeDuration,
-            reservationNumber: req.body.reservationNumber,
-            price: req.body.price,
-            notes: req.body.notes,
-            travelTime: travelTime, // Stocker le temps de trajet
-            files: req.body.files,
-            photos: req.body.photos
-        };
+        // Fusionner les données JSON et les champs directs
+        const updateData = { ...data, ...req.body };
 
-        const stopUpdated = await Stop.findByIdAndUpdate(
-            req.params.idStop,
-            { $set: updatedStop },
-            { new: true }
-        );
+        // Mettre à jour les champs de l'arrêt
+        if (updateData.name) stop.name = updateData.name;
+        if (updateData.address) {
+            stop.address = updateData.address;
+            // Obtenir les coordonnées géographiques à partir de l'adresse
+            try {
+                const coordinates = await getCoordinates(updateData.address);
+                stop.latitude = coordinates.lat;
+                stop.longitude = coordinates.lng;
+            } catch (error) {
+                console.error('Error getting coordinates:', error);
+            }
+        }
+        if (updateData.website) stop.website = updateData.website;
+        if (updateData.phone) stop.phone = updateData.phone;
+        if (updateData.email) stop.email = updateData.email;
+        if (updateData.arrivalDateTime) stop.arrivalDateTime = updateData.arrivalDateTime;
+        if (updateData.departureDateTime) stop.departureDateTime = updateData.departureDateTime;
+        if (updateData.duration) stop.duration = updateData.duration;
+        if (updateData.typeDuration) stop.typeDuration = updateData.typeDuration;
+        if (updateData.reservationNumber) stop.reservationNumber = updateData.reservationNumber;
+        if (updateData.price) stop.price = updateData.price;
+        if (updateData.notes) stop.notes = updateData.notes;
+
+        // Gérer les suppressions différées
+        if (updateData.existingFiles) {
+            console.log('Processing existing files:', updateData.existingFiles);
+            const existingFiles = updateData.existingFiles;
+            for (const file of existingFiles) {
+                console.log('Processing file:', file);
+                if (file.isDeleted) {
+                    console.log('Deleting file:', file.fileId);
+                    const fileId = new mongoose.Types.ObjectId(file.fileId);
+                    const fileToDelete = await File.findById(fileId);
+                    if (fileToDelete) {
+                        console.log('File found, deleting from GCS and database:', fileToDelete.url);
+                        await deleteFromGCS(fileToDelete.url);
+                        await fileToDelete.deleteOne();
+                        stop.photos = stop.photos.filter(f => f.toString() !== fileId.toString());
+                        stop.documents = stop.documents.filter(f => f.toString() !== fileId.toString());
+                        if (stop.thumbnail && stop.thumbnail.toString() === fileId.toString()) {
+                            stop.thumbnail = null;
+                        }
+                    } else {
+                        console.log('File not found:', file.fileId);
+                    }
+                }
+            }
+        }
+
+        // Télécharger les nouveaux fichiers
+        if (req.files) {
+            if (req.files.thumbnail) {
+                console.log('Uploading thumbnail...');
+                // Supprimer l'ancienne image thumbnail si elle existe
+                if (stop.thumbnail) {
+                    const oldThumbnail = await File.findById(stop.thumbnail);
+                    if (oldThumbnail) {
+                        await deleteFromGCS(oldThumbnail.url);
+                        await oldThumbnail.deleteOne();
+                    }
+                }
+                const url = await uploadToGCS(req.files.thumbnail[0], stop._id);
+                const file = new File({ url, type: 'thumbnail' });
+                await file.save();
+                stop.thumbnail = file._id;
+            }
+            if (req.files.photos && req.files.photos.length > 0) {
+                console.log('Uploading photos...');
+                const photos = await Promise.all(req.files.photos.map(async (photo) => {
+                    const url = await uploadToGCS(photo, stop._id);
+                    const file = new File({ url, type: 'photo' });
+                    await file.save();
+                    return file._id;
+                }));
+                stop.photos.push(...photos);
+                console.log('Updated stop photos:', stop.photos);
+            }
+            if (req.files.documents && req.files.documents.length > 0) {
+                console.log('Uploading documents...');
+                const documents = await Promise.all(req.files.documents.map(async (document) => {
+                    const url = await uploadToGCS(document, stop._id);
+                    const file = new File({ url, type: 'document' });
+                    await file.save();
+                    return file._id;
+                }));
+                stop.documents.push(...documents);
+                console.log('Updated stop documents:', stop.documents);
+            }
+        }
+
+        const stopUpdated = await stop.save();
+
+        // Ajouter les URLs aux attributs thumbnail, photos et documents
+        if (stopUpdated.thumbnail) {
+            const thumbnailFile = await File.findById(stopUpdated.thumbnail);
+            if (thumbnailFile) {
+                stopUpdated.thumbnailUrl = thumbnailFile.url;
+            }
+        }
+
+        if (stopUpdated.photos && stopUpdated.photos.length > 0) {
+            stopUpdated.photos = await Promise.all(stopUpdated.photos.map(async (photoId) => {
+                const photoFile = await File.findById(photoId);
+                return photoFile ? { _id: photoId, url: photoFile.url } : { _id: photoId };
+            }));
+        }
+
+        if (stopUpdated.documents && stopUpdated.documents.length > 0) {
+            stopUpdated.documents = await Promise.all(stopUpdated.documents.map(async (documentId) => {
+                const documentFile = await File.findById(documentId);
+                return documentFile ? { _id: documentId, url: documentFile.url } : { _id: documentId };
+            }));
+        }
 
         res.json(stopUpdated);
     } catch (err) {
@@ -135,10 +269,40 @@ export const updateStop = async (req, res) => {
     }
 };
 
-//Méthode pour obtenir les informations d'un arrêt
+// Méthode pour obtenir les informations de tous les arrêts d'un roadtrip
+export const getStopsByRoadtrip = async (req, res) => {
+    try {
+        const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
+
+        if (!roadtrip) {
+            return res.status(404).json({ msg: 'Roadtrip not found' });
+        }
+
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip
+        if (roadtrip.userId.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        const stops = await Stop.find({ roadtripId: req.params.idRoadtrip })
+            .populate('photos')
+            .populate('documents')
+            .populate('thumbnail');
+
+        res.json(stops);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
+
+// Méthode pour obtenir les informations d'un arrêt
 export const getStopById = async (req, res) => {
     try {
-        const stop = await Stop.findById(req.params.idStop);
+        const stop = await Stop.findById(req.params.idStop)
+            .populate('photos')
+            .populate('documents')
+            .populate('thumbnail');;
 
         if (!stop) {
             return res.status(404).json({ msg: 'Stop not found' });
@@ -156,7 +320,7 @@ export const getStopById = async (req, res) => {
     }
 };
 
-//Méthode pour supprimer un arrêt
+// Méthode pour supprimer un arrêt
 export const deleteStop = async (req, res) => {
     try {
         const stop = await Stop.findById(req.params.idStop);
@@ -178,7 +342,7 @@ export const deleteStop = async (req, res) => {
             await roadtrip.save();
         }
 
-        //Supprimer l'arrêt
+        // Supprimer l'arrêt
         await Stop.deleteOne({ _id: req.params.idStop });
 
         res.json({ msg: 'Stop removed' });
@@ -187,4 +351,3 @@ export const deleteStop = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
-

@@ -4,8 +4,9 @@ import Stop from '../models/Stop.js';
 import Accommodation from '../models/Accommodation.js';
 import Activity from '../models/Activity.js';
 import File from '../models/File.js';
-import { calculateTravelTime } from '../utils/googleMapsUtils.js';
+import { calculateTravelTime, getCoordinates } from '../utils/googleMapsUtils.js';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
+
 
 // Méthode pour créer une nouvelle étape pour un roadtrip donné
 export const createStageForRoadtrip = async (req, res) => {
@@ -38,9 +39,21 @@ export const createStageForRoadtrip = async (req, res) => {
             }
         }
 
+        // Obtenir les coordonnées géographiques à partir de l'adresse
+        let coordinates = {};
+        if (req.body.address) {
+            try {
+                coordinates = await getCoordinates(req.body.address);
+            } catch (error) {
+                console.error('Error getting coordinates:', error);
+            }
+        }
+
         const newStage = new Stage({
             name: req.body.name, // Nom par défaut si non fourni
             address: req.body.address, // Adresse par défaut si non fournie
+            latitude: coordinates.lat,
+            longitude: coordinates.lng,
             nights: req.body.nights, // Nombre de nuits par défaut si non fourni
             arrivalDateTime: req.body.arrivalDateTime, // Date et heure d'arrivée
             departureDateTime: req.body.departureDateTime, // Date et heure de départ
@@ -101,7 +114,17 @@ export const updateStage = async (req, res) => {
 
         // Mettre à jour les champs de l'étape
         if (updateData.name) stage.name = updateData.name;
-        if (updateData.address) stage.address = updateData.address;
+        if (updateData.address) {
+            stage.address = updateData.address;
+            // Obtenir les coordonnées géographiques à partir de l'adresse
+            try {
+                const coordinates = await getCoordinates(updateData.address);
+                stage.latitude = coordinates.lat;
+                stage.longitude = coordinates.lng;
+            } catch (error) {
+                console.error('Error getting coordinates:', error);
+            }
+        }
         if (updateData.arrivalDateTime) stage.arrivalDateTime = updateData.arrivalDateTime;
         if (updateData.departureDateTime) stage.departureDateTime = updateData.departureDateTime;
         if (updateData.nights) stage.nights = updateData.nights;
@@ -252,21 +275,7 @@ export const updateStage = async (req, res) => {
 // Méthode pour obtenir les informations de toutes les étapes d'un roadtrip
 export const getStagesByRoadtrip = async (req, res) => {
     try {
-        const roadtrip = await Roadtrip.findById(req.params.idRoadtrip)
-            .populate({
-                path: 'stages',
-                populate: {
-                    path: 'accommodations',
-                    model: 'Accommodation'
-                }
-            })
-            .populate({
-                path: 'stages',
-                populate: {
-                    path: 'activities',
-                    model: 'Activity'
-                }
-            });
+        const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
         if (!roadtrip) {
             return res.status(404).json({ msg: 'Roadtrip not found' });
@@ -277,7 +286,15 @@ export const getStagesByRoadtrip = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        res.json(roadtrip.stages);
+        //récupérer les étapes du roadtrip
+        const stages = await Stage.find({ roadtripId: req.params.idRoadtrip })
+            .populate('accommodations')
+            .populate('activities') 
+            .populate('photos')
+            .populate('documents')
+            .populate('thumbnail');
+
+        res.json(stages);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -289,8 +306,10 @@ export const getStageById = async (req, res) => {
     try {
         const stage = await Stage.findById(req.params.idStage)
             .populate('accommodations')
-            .populate('activities');
-
+            .populate('activities')
+            .populate('photos')
+            .populate('documents')
+            .populate('thumbnail');
         console.log("ID Stage en paramètre : " + req.params.idStage);
 
         if (!stage) {
@@ -308,6 +327,8 @@ export const getStageById = async (req, res) => {
         if (roadtrip.userId.toString() !== req.user.id) {
             return res.status(401).json({ msg: 'User not authorized' });
         }
+
+        
 
         res.json(stage);
     } catch (err) {
@@ -347,4 +368,4 @@ export const deleteStage = async (req, res) => {
         console.error(err.message);
         res.status(500).send('Server error');
     }
-}
+};

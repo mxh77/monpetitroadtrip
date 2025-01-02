@@ -53,6 +53,9 @@ router.get('/:idRoadtrip', auth, roadtripController.getRoadtripById);
 // Route protégée pour obtenir les étapes d'un roadtrip spécifique
 router.get('/:idRoadtrip/stages', auth, stageController.getStagesByRoadtrip);
 
+// Route protégée pour obtenir les stops d'un roadtrip spécifique
+router.get('/:idRoadtrip/stops', auth, stopController.getStopsByRoadtrip);
+
 /***************************/
 /********METHOD DELETE******/
 /***************************/

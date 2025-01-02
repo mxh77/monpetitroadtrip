@@ -7,6 +7,8 @@ const StopSchema = new Schema({
     roadtripId: { type: Schema.Types.ObjectId, ref: 'Roadtrip', required: true },
     name: { type: String, required: true },
     address: { type: String, default: '' },
+    latitude: { type: Number, default: 0 },
+    longitude: { type: Number, default: 0 },
     website: { type: String, default: '' },
     phone: { type: String, default: '' },
     email: { type: String, default: '' },
@@ -25,8 +27,9 @@ const StopSchema = new Schema({
     reservationNumber: { type: String, default: '' },
     price: { type: Number, default: 0 },
     notes: { type: String, default: '' },
-    files: { type: [String] },
-    photos: { type: [String] }
+    photos: [{ type: Schema.Types.ObjectId, ref: 'File' }],
+    documents: [{ type: Schema.Types.ObjectId, ref: 'File' }],
+    thumbnail: { type: Schema.Types.ObjectId, ref: 'File' },
 });
 
 export default mongoose.model('Stop', StopSchema);
