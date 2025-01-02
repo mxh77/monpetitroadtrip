@@ -7,7 +7,6 @@ import File from '../models/File.js';
 import { calculateTravelTime, getCoordinates } from '../utils/googleMapsUtils.js';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
 
-
 // Méthode pour créer une nouvelle étape pour un roadtrip donné
 export const createStageForRoadtrip = async (req, res) => {
     try {
@@ -134,6 +133,16 @@ export const updateStage = async (req, res) => {
         if (Array.isArray(updateData.accommodations)) {
             for (const accommodation of updateData.accommodations) {
                 if (accommodation._id) {
+                    // Obtenir les coordonnées géographiques à partir de l'adresse de l'hébergement
+                    if (accommodation.address) {
+                        try {
+                            const coordinates = await getCoordinates(accommodation.address);
+                            accommodation.latitude = coordinates.lat;
+                            accommodation.longitude = coordinates.lng;
+                        } catch (error) {
+                            console.error('Error getting coordinates for accommodation:', error);
+                        }
+                    }
                     // Mettre à jour l'hébergement existant
                     await Accommodation.findByIdAndUpdate(accommodation._id, accommodation, { new: true, runValidators: true });
                 } else {
@@ -151,6 +160,16 @@ export const updateStage = async (req, res) => {
         if (Array.isArray(updateData.activities)) {
             for (const activity of updateData.activities) {
                 if (activity._id) {
+                    // Obtenir les coordonnées géographiques à partir de l'adresse de l'activité
+                    if (activity.address) {
+                        try {
+                            const coordinates = await getCoordinates(activity.address);
+                            activity.latitude = coordinates.lat;
+                            activity.longitude = coordinates.lng;
+                        } catch (error) {
+                            console.error('Error getting coordinates for activity:', error);
+                        }
+                    }
                     // Mettre à jour l'activité existante   
                     await Activity.findByIdAndUpdate(activity._id, activity, { new: true, runValidators: true });
                 } else {
@@ -289,7 +308,7 @@ export const getStagesByRoadtrip = async (req, res) => {
         //récupérer les étapes du roadtrip
         const stages = await Stage.find({ roadtripId: req.params.idRoadtrip })
             .populate('accommodations')
-            .populate('activities') 
+            .populate('activities')
             .populate('photos')
             .populate('documents')
             .populate('thumbnail');
@@ -328,7 +347,7 @@ export const getStageById = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        
+
 
         res.json(stage);
     } catch (err) {

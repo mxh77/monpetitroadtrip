@@ -1,6 +1,9 @@
 import Activity from '../models/Activity.js';
 import Stage from '../models/Stage.js';
 import Roadtrip from '../models/Roadtrip.js';
+import File from '../models/File.js';
+import { getCoordinates } from '../utils/googleMapsUtils.js';
+import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
 
 // Méthode pour créer une nouvelle activité pour une étape donnée
 export const createActivityForStage = async (req, res) => {
@@ -24,27 +27,70 @@ export const createActivityForStage = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
+        // Obtenir les coordonnées géographiques à partir de l'adresse
+        let coordinates = {};
+        if (req.body.address) {
+            try {
+                coordinates = await getCoordinates(req.body.address);
+            } catch (error) {
+                console.error('Error getting coordinates:', error);
+            }
+        }
+
         const activity = new Activity({
             name: req.body.name,
             address: req.body.address,
+            latitude: coordinates.lat,
+            longitude: coordinates.lng,
             website: req.body.website,
             phone: req.body.phone,
             email: req.body.email,
             startDateTime: req.body.startDateTime,
-            endDateTime:req.body.endDateTime,
+            endDateTime: req.body.endDateTime,
             typeDuration: req.body.typeDuration,
             duration: req.body.duration,
             reservationNumber: req.body.reservationNumber,
             price: req.body.price,
             notes: req.body.notes,
-            files: req.body.files,
-            photos: req.body.photos,
             stageId: req.params.idStage,
             userId: req.user.id
         });
 
-        //Ajouter l'arrêt à la liste des arrêts de l'étape  
-        stage.activities.push(activity);
+        // Télécharger les nouveaux fichiers
+        if (req.files) {
+            if (req.files.thumbnail) {
+                console.log('Uploading thumbnail...');
+                const url = await uploadToGCS(req.files.thumbnail[0], activity._id);
+                const file = new File({ url, type: 'thumbnail' });
+                await file.save();
+                activity.thumbnail = file._id;
+            }
+            if (req.files.photos && req.files.photos.length > 0) {
+                console.log('Uploading photos...');
+                const photos = await Promise.all(req.files.photos.map(async (photo) => {
+                    const url = await uploadToGCS(photo, activity._id);
+                    const file = new File({ url, type: 'photo' });
+                    await file.save();
+                    return file._id;
+                }));
+                activity.photos.push(...photos);
+                console.log('Updated activity photos:', activity.photos);
+            }
+            if (req.files.documents && req.files.documents.length > 0) {
+                console.log('Uploading documents...');
+                const documents = await Promise.all(req.files.documents.map(async (document) => {
+                    const url = await uploadToGCS(document, activity._id);
+                    const file = new File({ url, type: 'document' });
+                    await file.save();
+                    return file._id;
+                }));
+                activity.documents.push(...documents);
+                console.log('Updated activity documents:', activity.documents);
+            }
+        }
+
+        // Ajouter l'activité à la liste des activités de l'étape
+        stage.activities.push(activity._id);
         await stage.save();
 
         await activity.save();
@@ -72,6 +118,19 @@ export const updateActivity = async (req, res) => {
         if (activity.userId.toString() !== req.user.id) {
             return res.status(401).json({ msg: 'User not authorized' });
         }
+
+        // Obtenir les coordonnées géographiques à partir de l'adresse
+        let coordinates = {};
+        if (req.body.address) {
+            try {
+                coordinates = await getCoordinates(req.body.address);
+                activity.latitude = coordinates.lat;
+                activity.longitude = coordinates.lng;
+            } catch (error) {
+                console.error('Error getting coordinates:', error);
+            }
+        }
+
         // Mettre à jour les champs de l'activité
         activity.name = req.body.name || activity.name;
         activity.address = req.body.address || activity.address;
@@ -85,8 +144,73 @@ export const updateActivity = async (req, res) => {
         activity.reservationNumber = req.body.reservationNumber || activity.reservationNumber;
         activity.price = req.body.price || activity.price;
         activity.notes = req.body.notes || activity.notes;
-        activity.files = req.body.files || activity.files;
-        activity.photos = req.body.photos || activity.photos;
+
+        // Gérer les suppressions différées
+        if (req.body.existingFiles) {
+            console.log('Processing existing files:', req.body.existingFiles);
+            const existingFiles = req.body.existingFiles;
+            for (const file of existingFiles) {
+                console.log('Processing file:', file);
+                if (file.isDeleted) {
+                    console.log('Deleting file:', file.fileId);
+                    const fileId = new mongoose.Types.ObjectId(file.fileId);
+                    const fileToDelete = await File.findById(fileId);
+                    if (fileToDelete) {
+                        console.log('File found, deleting from GCS and database:', fileToDelete.url);
+                        await deleteFromGCS(fileToDelete.url);
+                        await fileToDelete.deleteOne();
+                        activity.photos = activity.photos.filter(f => f.toString() !== fileId.toString());
+                        activity.documents = activity.documents.filter(f => f.toString() !== fileId.toString());
+                        if (activity.thumbnail && activity.thumbnail.toString() === fileId.toString()) {
+                            activity.thumbnail = null;
+                        }
+                    } else {
+                        console.log('File not found:', file.fileId);
+                    }
+                }
+            }
+        }
+
+        // Télécharger les nouveaux fichiers
+        if (req.files) {
+            if (req.files.thumbnail) {
+                console.log('Uploading thumbnail...');
+                // Supprimer l'ancienne image thumbnail si elle existe
+                if (activity.thumbnail) {
+                    const oldThumbnail = await File.findById(activity.thumbnail);
+                    if (oldThumbnail) {
+                        await deleteFromGCS(oldThumbnail.url);
+                        await oldThumbnail.deleteOne();
+                    }
+                }
+                const url = await uploadToGCS(req.files.thumbnail[0], activity._id);
+                const file = new File({ url, type: 'thumbnail' });
+                await file.save();
+                activity.thumbnail = file._id;
+            }
+            if (req.files.photos && req.files.photos.length > 0) {
+                console.log('Uploading photos...');
+                const photos = await Promise.all(req.files.photos.map(async (photo) => {
+                    const url = await uploadToGCS(photo, activity._id);
+                    const file = new File({ url, type: 'photo' });
+                    await file.save();
+                    return file._id;
+                }));
+                activity.photos.push(...photos);
+                console.log('Updated activity photos:', activity.photos);
+            }
+            if (req.files.documents && req.files.documents.length > 0) {
+                console.log('Uploading documents...');
+                const documents = await Promise.all(req.files.documents.map(async (document) => {
+                    const url = await uploadToGCS(document, activity._id);
+                    const file = new File({ url, type: 'document' });
+                    await file.save();
+                    return file._id;
+                }));
+                activity.documents.push(...documents);
+                console.log('Updated activity documents:', activity.documents);
+            }
+        }
 
         await activity.save();
 
@@ -101,7 +225,7 @@ export const updateActivity = async (req, res) => {
     }
 };
 
-//Méthode pour obtenir les informations d'une activité
+// Méthode pour obtenir les informations d'une activité
 export const getActivityById = async (req, res) => {
     try {
         const activity = await Activity.findById(req.params.idActivity);
@@ -115,6 +239,28 @@ export const getActivityById = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
+        // Ajouter les URLs aux attributs thumbnail, photos et documents
+        if (activity.thumbnail) {
+            const thumbnailFile = await File.findById(activity.thumbnail);
+            if (thumbnailFile) {
+                activity.thumbnailUrl = thumbnailFile.url;
+            }
+        }
+
+        if (activity.photos && activity.photos.length > 0) {
+            activity.photos = await Promise.all(activity.photos.map(async (photoId) => {
+                const photoFile = await File.findById(photoId);
+                return photoFile ? { _id: photoId, url: photoFile.url } : { _id: photoId };
+            }));
+        }
+
+        if (activity.documents && activity.documents.length > 0) {
+            activity.documents = await Promise.all(activity.documents.map(async (documentId) => {
+                const documentFile = await File.findById(documentId);
+                return documentFile ? { _id: documentId, url: documentFile.url } : { _id: documentId };
+            }));
+        }
+
         res.json(activity);
     } catch (err) {
         console.error(err.message);
@@ -122,12 +268,12 @@ export const getActivityById = async (req, res) => {
     }
 };
 
-//Méthode pour supprimer une activité
+// Méthode pour supprimer une activité
 export const deleteActivity = async (req, res) => {
     try {
         const activity = await Activity.findById(req.params.idActivity);
 
-        //Vérifier si l'activité existe
+        // Vérifier si l'activité existe
         if (!activity) {
             return res.status(404).json({ msg: 'Activité non trouvée' });
         }
@@ -144,7 +290,7 @@ export const deleteActivity = async (req, res) => {
             await stage.save();
         }
 
-        //Supprimer l'activité
+        // Supprimer l'activité
         await Activity.deleteOne({ _id: req.params.idActivity });
 
         res.json({ msg: 'Activité supprimée' });
