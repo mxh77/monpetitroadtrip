@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
-import dotenv from 'dotenv';
+import dotenv, { populate } from 'dotenv';
 
 dotenv.config();
 
@@ -268,20 +268,37 @@ export const getRoadtripById = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip)
             .populate('stages')
-            .populate('stops')
+            .populate('stops',)
             .populate({
                 path: 'stages',
                 populate: {
                     path: 'accommodations',
-                    model: 'Accommodation'
+                    populate: [
+                        { path: 'photos', model: 'File' },
+                        { path: 'documents', model: 'File' },
+                        { path: 'thumbnail', model: 'File' }
+                    ]
                 }
             })
             .populate({
                 path: 'stages',
                 populate: {
                     path: 'activities',
-                    model: 'Activity'
+                    populate: [
+                        { path: 'photos', model: 'File' },
+                        { path: 'documents', model: 'File' },
+                        { path: 'thumbnail', model: 'File' }
+                    ]
+
                 }
+            })
+            .populate({
+                path: 'stops',
+                populate: [
+                    { path: 'photos', model: 'File' },
+                    { path: 'documents', model: 'File' },
+                    { path: 'thumbnail', model: 'File' }
+                ]
             })
             .populate('photos')
             .populate('documents')

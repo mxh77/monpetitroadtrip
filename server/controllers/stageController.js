@@ -307,8 +307,22 @@ export const getStagesByRoadtrip = async (req, res) => {
 
         //récupérer les étapes du roadtrip
         const stages = await Stage.find({ roadtripId: req.params.idRoadtrip })
-            .populate('accommodations')
-            .populate('activities')
+            .populate({
+                path: 'accommodations',
+                populate: [
+                    { path: 'photos', model: 'File' },
+                    { path: 'documents', model: 'File' },
+                    { path: 'thumbnail', model: 'File' }
+                ]
+            })
+            .populate({
+                path: 'activities',
+                populate: [
+                    { path: 'photos', model: 'File' },
+                    { path: 'documents', model: 'File' },
+                    { path: 'thumbnail', model: 'File' }
+                ]
+            })
             .populate('photos')
             .populate('documents')
             .populate('thumbnail');
