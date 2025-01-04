@@ -17,7 +17,9 @@ const upload = multer({ storage: multerStorage });
 /********METHOD POST********/
 /***************************/
 // Route protégée pour créer un roadtrip
-router.post('/', auth, roadtripController.createRoadtrip);
+router.post('/', auth, upload.fields([
+    { name: 'thumbnail', maxCount: 1 }
+]), roadtripController.createRoadtrip);
 
 // Route protégée pour créer une étape pour un roadtrip
 router.post('/:idRoadtrip/stages', auth, stageController.createStageForRoadtrip);

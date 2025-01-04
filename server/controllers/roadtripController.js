@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
-import dotenv, { populate } from 'dotenv';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -24,22 +24,54 @@ const calculateDays = (startDateTime, endDateTime) => {
 // Méthode pour créer un roadtrip
 export const createRoadtrip = async (req, res) => {
     try {
-        const days = calculateDays(req.body.startDateTime, req.body.endDateTime);
+        // Log pour vérifier le contenu de req.body
+        console.log('req.body:', req.body);
+
+        // Extraire les données JSON du champ 'data' si elles existent
+        let data = {};
+        if (req.body.data) {
+            try {
+                data = JSON.parse(req.body.data);
+            } catch (error) {
+                return res.status(400).json({ msg: 'Invalid JSON in data field' });
+            }
+        } else {
+            // Si 'data' n'est pas présent, utiliser les champs individuels
+            data = req.body;
+        }
+
+        // Log pour vérifier le contenu de data
+        console.log('Data:', data);
+
+        // Vérifier que les champs requis sont présents
+        if (!data.name || !data.startDateTime || !data.endDateTime) {
+            return res.status(400).json({ msg: 'Name, startDateTime, and endDateTime are required' });
+        }
+
+        const days = calculateDays(data.startDateTime, data.endDateTime);
 
         const newRoadtrip = new Roadtrip({
             userId: req.user.id,
-            name: req.body.name,
+            name: data.name,
             days: days, // Calcul automatique du nombre de jours
-            startLocation: req.body.startLocation,
-            startDateTime: req.body.startDateTime,
-            endLocation: req.body.endLocation,
-            endDateTime: req.body.endDateTime,
-            currency: req.body.currency,
-            notes: req.body.notes,
-            stages: req.body.stages,
-            stops: req.body.stops
+            startLocation: data.startLocation,
+            startDateTime: data.startDateTime,
+            endLocation: data.endLocation,
+            endDateTime: data.endDateTime,
+            currency: data.currency,
+            notes: data.notes,
+            stages: data.stages,
+            stops: data.stops
         });
 
+          // Télécharger le fichier thumbnail s'il existe
+          if (req.files && req.files.thumbnail) {
+            console.log('Uploading thumbnail...');
+            const url = await uploadToGCS(req.files.thumbnail[0], newRoadtrip._id);
+            const file = new File({ url, type: 'thumbnail' });
+            await file.save();
+            newRoadtrip.thumbnail = file._id;
+        }
         const roadtrip = await newRoadtrip.save();
 
         res.json(roadtrip);
@@ -71,6 +103,9 @@ export const updateRoadtrip = async (req, res) => {
             } catch (error) {
                 return res.status(400).json({ msg: 'Invalid JSON in data field' });
             }
+        } else {
+            // Si 'data' n'est pas présent, utiliser les champs individuels
+            data = req.body;
         }
 
         // Mettre à jour les champs du roadtrip
@@ -268,7 +303,7 @@ export const getRoadtripById = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip)
             .populate('stages')
-            .populate('stops',)
+            .populate('stops')
             .populate({
                 path: 'stages',
                 populate: {
@@ -289,7 +324,6 @@ export const getRoadtripById = async (req, res) => {
                         { path: 'documents', model: 'File' },
                         { path: 'thumbnail', model: 'File' }
                     ]
-
                 }
             })
             .populate({
@@ -312,6 +346,55 @@ export const getRoadtripById = async (req, res) => {
         if (roadtrip.userId.toString() !== req.user.id) {
             return res.status(401).json({ msg: 'User not authorized' });
         }
+
+        // Ajouter les URLs aux attributs thumbnail, photos et documents pour chaque accommodation et activity
+        const stagesWithFiles = roadtrip.stages.map(stage => {
+            stage.accommodations = stage.accommodations.map(accommodation => {
+                if (accommodation.thumbnail) {
+                    accommodation.thumbnailUrl = accommodation.thumbnail.url;
+                }
+                if (accommodation.photos && accommodation.photos.length > 0) {
+                    accommodation.photos = accommodation.photos.map(photo => ({
+                        _id: photo._id,
+                        url: photo.url,
+                        type: photo.type
+                    }));
+                }
+                if (accommodation.documents && accommodation.documents.length > 0) {
+                    accommodation.documents = accommodation.documents.map(document => ({
+                        _id: document._id,
+                        url: document.url,
+                        type: document.type
+                    }));
+                }
+                return accommodation;
+            });
+
+            stage.activities = stage.activities.map(activity => {
+                if (activity.thumbnail) {
+                    activity.thumbnailUrl = activity.thumbnail.url;
+                }
+                if (activity.photos && activity.photos.length > 0) {
+                    activity.photos = activity.photos.map(photo => ({
+                        _id: photo._id,
+                        url: photo.url,
+                        type: photo.type
+                    }));
+                }
+                if (activity.documents && activity.documents.length > 0) {
+                    activity.documents = activity.documents.map(document => ({
+                        _id: document._id,
+                        url: document.url,
+                        type: document.type
+                    }));
+                }
+                return activity;
+            });
+
+            return stage;
+        });
+
+        roadtrip.stages = stagesWithFiles;
 
         res.json(roadtrip);
 
