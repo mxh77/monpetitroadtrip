@@ -338,11 +338,25 @@ export const getStagesByRoadtrip = async (req, res) => {
 export const getStageById = async (req, res) => {
     try {
         const stage = await Stage.findById(req.params.idStage)
-            .populate('accommodations')
-            .populate('activities')
-            .populate('photos')
-            .populate('documents')
-            .populate('thumbnail');
+        .populate({
+            path: 'accommodations',
+            populate: [
+                { path: 'photos', model: 'File' },
+                { path: 'documents', model: 'File' },
+                { path: 'thumbnail', model: 'File' }
+            ]
+        })
+        .populate({
+            path: 'activities',
+            populate: [
+                { path: 'photos', model: 'File' },
+                { path: 'documents', model: 'File' },
+                { path: 'thumbnail', model: 'File' }
+            ]
+        })
+        .populate('photos')
+        .populate('documents')
+        .populate('thumbnail');
         console.log("ID Stage en paramètre : " + req.params.idStage);
 
         if (!stage) {
