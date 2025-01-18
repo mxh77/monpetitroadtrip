@@ -5,7 +5,6 @@ const { Schema } = mongoose;
 const roadtripSchema = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
-    days: { type: Number, required: true },
     startLocation: { type: String, default: '' },
     startDateTime: { type: Date }, 
     endLocation: { type: String, default: '' },

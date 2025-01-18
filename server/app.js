@@ -2,6 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import axios from 'axios';
 import path from 'path';
+import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { auth } from './middleware/auth.js';
 import authRoutes from './routes/authRoutes.js';
@@ -33,6 +34,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// CORS
+app.use(cors({
+  origin: '*', // Vous pouvez restreindre cela à votre domaine spécifique
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../public')));
