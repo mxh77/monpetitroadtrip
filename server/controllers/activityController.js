@@ -27,31 +27,44 @@ export const createActivityForStage = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
+        // Extraire les données JSON du champ 'data' si elles existent
+        let data = {};
+        if (req.body.data) {
+            try {
+                data = JSON.parse(req.body.data);
+            } catch (error) {
+                return res.status(400).json({ msg: 'Invalid JSON in data field' });
+            }
+        } else {
+            // Si 'data' n'est pas présent, utiliser les champs individuels
+            data = req.body;
+        }
+
         // Obtenir les coordonnées géographiques à partir de l'adresse
         let coordinates = {};
-        if (req.body.address) {
+        if (data.address) {
             try {
-                coordinates = await getCoordinates(req.body.address);
+                coordinates = await getCoordinates(data.address);
             } catch (error) {
                 console.error('Error getting coordinates:', error);
             }
         }
 
         const activity = new Activity({
-            name: req.body.name,
-            address: req.body.address,
+            name: data.name,
+            address: data.address,
             latitude: coordinates.lat,
             longitude: coordinates.lng,
-            website: req.body.website,
-            phone: req.body.phone,
-            email: req.body.email,
-            startDateTime: req.body.startDateTime,
-            endDateTime: req.body.endDateTime,
-            typeDuration: req.body.typeDuration,
-            duration: req.body.duration,
-            reservationNumber: req.body.reservationNumber,
-            price: req.body.price,
-            notes: req.body.notes,
+            website: data.website,
+            phone: data.phone,
+            email: data.email,
+            startDateTime: data.startDateTime,
+            endDateTime: data.endDateTime,
+            typeDuration: data.typeDuration,
+            duration: data.duration,
+            reservationNumber: data.reservationNumber,
+            price: data.price,
+            notes: data.notes,
             stageId: req.params.idStage,
             userId: req.user.id
         });
@@ -119,11 +132,25 @@ export const updateActivity = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
+      // Extraire les données JSON du champ 'data' si elles existent
+      let data = {};
+      if (req.body.data) {
+          try {
+              data = JSON.parse(req.body.data);
+          } catch (error) {
+              return res.status(400).json({ msg: 'Invalid JSON in data field' });
+          }
+      } else {
+          // Si 'data' n'est pas présent, utiliser les champs individuels
+          data = req.body;
+      }
+
+
         // Obtenir les coordonnées géographiques à partir de l'adresse
         let coordinates = {};
-        if (req.body.address) {
+        if (data.address) {
             try {
-                coordinates = await getCoordinates(req.body.address);
+                coordinates = await getCoordinates(data.address);
                 activity.latitude = coordinates.lat;
                 activity.longitude = coordinates.lng;
             } catch (error) {
@@ -132,23 +159,23 @@ export const updateActivity = async (req, res) => {
         }
 
         // Mettre à jour les champs de l'activité
-        activity.name = req.body.name || activity.name;
-        activity.address = req.body.address || activity.address;
-        activity.website = req.body.website || activity.website;
-        activity.phone = req.body.phone || activity.phone;
-        activity.email = req.body.email || activity.email;
-        activity.startDateTime = req.body.startDateTime || activity.startDateTime;
-        activity.endDateTime = req.body.endDateTime || activity.endDateTime;
-        activity.duration = req.body.duration || activity.duration;
-        activity.typeDuration = req.body.typeDuration || activity.typeDuration;
-        activity.reservationNumber = req.body.reservationNumber || activity.reservationNumber;
-        activity.price = req.body.price || activity.price;
-        activity.notes = req.body.notes || activity.notes;
+        activity.name = data.name || activity.name;
+        activity.address = data.address || activity.address;
+        activity.website = data.website || activity.website;
+        activity.phone = data.phone || activity.phone;
+        activity.email = data.email || activity.email;
+        activity.startDateTime = data.startDateTime || activity.startDateTime;
+        activity.endDateTime = data.endDateTime || activity.endDateTime;
+        activity.duration = data.duration || activity.duration;
+        activity.typeDuration = data.typeDuration || activity.typeDuration;
+        activity.reservationNumber = data.reservationNumber || activity.reservationNumber;
+        activity.price = data.price || activity.price;
+        activity.notes = data.notes || activity.notes;
 
         // Gérer les suppressions différées
-        if (req.body.existingFiles) {
-            console.log('Processing existing files:', req.body.existingFiles);
-            const existingFiles = req.body.existingFiles;
+        if (data.existingFiles) {
+            console.log('Processing existing files:', data.existingFiles);
+            const existingFiles = data.existingFiles;
             for (const file of existingFiles) {
                 console.log('Processing file:', file);
                 if (file.isDeleted) {
