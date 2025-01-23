@@ -27,31 +27,44 @@ export const createAccommodationForStage = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
+        // Extraire les données JSON du champ 'data' si elles existent
+        let data = {};
+        if (req.body.data) {
+            try {
+                data = JSON.parse(req.body.data);
+            } catch (error) {
+                return res.status(400).json({ msg: 'Invalid JSON in data field' });
+            }
+        } else {
+            // Si 'data' n'est pas présent, utiliser les champs individuels
+            data = req.body;
+        }
+
         // Obtenir les coordonnées géographiques à partir de l'adresse
         let coordinates = {};
-        if (req.body.address) {
+        if (data.address) {
             try {
-                coordinates = await getCoordinates(req.body.address);
+                coordinates = await getCoordinates(data.address);
             } catch (error) {
                 console.error('Error getting coordinates:', error);
             }
         }
 
         const accommodation = new Accommodation({
-            name: req.body.name,
-            address: req.body.address,
+            name: data.name,
+            address: data.address,
             latitude: coordinates.lat,
             longitude: coordinates.lng,
-            website: req.body.website,
-            phone: req.body.phone,
-            email: req.body.email,
-            arrivalDateTime: req.body.arrivalDateTime,
-            departureDateTime: req.body.departureDateTime,
-            confirmationDateTime: req.body.confirmationDateTime,
-            reservationNumber: req.body.reservationNumber,
-            nights: req.body.nights,
-            price: req.body.price,
-            notes: req.body.notes,
+            website: data.website,
+            phone: data.phone,
+            email: data.email,
+            arrivalDateTime: data.arrivalDateTime,
+            departureDateTime: data.departureDateTime,
+            confirmationDateTime: data.confirmationDateTime,
+            reservationNumber: data.reservationNumber,
+            nights: data.nights,
+            price: data.price,
+            notes: data.notes,
             stageId: req.params.idStage,
             userId: req.user.id
         });
@@ -115,11 +128,24 @@ export const updateAccommodation = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
+        // Extraire les données JSON du champ 'data' si elles existent
+        let data = {};
+        if (req.body.data) {
+            try {
+                data = JSON.parse(req.body.data);
+            } catch (error) {
+                return res.status(400).json({ msg: 'Invalid JSON in data field' });
+            }
+        } else {
+            // Si 'data' n'est pas présent, utiliser les champs individuels
+            data = req.body;
+        }
+
         // Obtenir les coordonnées géographiques à partir de l'adresse
         let coordinates = {};
-        if (req.body.address) {
+        if (data.address) {
             try {
-                coordinates = await getCoordinates(req.body.address);
+                coordinates = await getCoordinates(data.address);
                 accommodation.latitude = coordinates.lat;
                 accommodation.longitude = coordinates.lng;
             } catch (error) {
@@ -128,23 +154,23 @@ export const updateAccommodation = async (req, res) => {
         }
 
         // Mettre à jour les champs de l'hébergement
-        if (req.body.name) accommodation.name = req.body.name;
-        if (req.body.address) accommodation.address = req.body.address;
-        if (req.body.website) accommodation.website = req.body.website;
-        if (req.body.phone) accommodation.phone = req.body.phone;
-        if (req.body.email) accommodation.email = req.body.email;
-        if (req.body.arrivalDateTime) accommodation.arrivalDateTime = req.body.arrivalDateTime;
-        if (req.body.departureDateTime) accommodation.departureDateTime = req.body.departureDateTime;
-        if (req.body.confirmationDateTime) accommodation.confirmationDateTime = req.body.confirmationDateTime;
-        if (req.body.reservationNumber) accommodation.reservationNumber = req.body.reservationNumber;
-        if (req.body.nights) accommodation.nights = req.body.nights;
-        if (req.body.price) accommodation.price = req.body.price;
-        if (req.body.notes) accommodation.notes = req.body.notes;
+        if (data.name) accommodation.name = data.name;
+        if (data.address) accommodation.address = data.address;
+        if (data.website) accommodation.website = data.website;
+        if (data.phone) accommodation.phone = data.phone;
+        if (data.email) accommodation.email = data.email;
+        if (data.arrivalDateTime) accommodation.arrivalDateTime = data.arrivalDateTime;
+        if (data.departureDateTime) accommodation.departureDateTime = data.departureDateTime;
+        if (data.confirmationDateTime) accommodation.confirmationDateTime = data.confirmationDateTime;
+        if (data.reservationNumber) accommodation.reservationNumber = data.reservationNumber;
+        if (data.nights) accommodation.nights = data.nights;
+        if (data.price) accommodation.price = data.price;
+        if (data.notes) accommodation.notes = data.notes;
 
         // Gérer les suppressions différées
-        if (req.body.existingFiles) {
-            console.log('Processing existing files:', req.body.existingFiles);
-            const existingFiles = req.body.existingFiles;
+        if (data.existingFiles) {
+            console.log('Processing existing files:', data.existingFiles);
+            const existingFiles = data.existingFiles;
             for (const file of existingFiles) {
                 console.log('Processing file:', file);
                 if (file.isDeleted) {
