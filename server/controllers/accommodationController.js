@@ -40,6 +40,7 @@ export const createAccommodationForStage = async (req, res) => {
             data = req.body;
         }
 
+        console.log("Data: ", data);
         // Obtenir les coordonnées géographiques à partir de l'adresse
         let coordinates = {};
         if (data.address) {
