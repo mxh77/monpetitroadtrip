@@ -28,7 +28,11 @@ router.post('/:idRoadtrip/stages', auth, stageController.createStageForRoadtrip)
 router.post('/:idRoadtrip/stops', auth, stopController.createStopForRoadtrip);
 
 // Route protégée pour créer un hébergement lié à une étape de roadtrip
-router.post('/:idRoadtrip/stages/:idStage/accommodations', auth, accommodationController.createAccommodationForStage);
+router.post('/:idRoadtrip/stages/:idStage/accommodations', auth, upload.fields([
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'photos', maxCount: 10 },
+    { name: 'documents', maxCount: 10 }
+]), accommodationController.createAccommodationForStage);
 
 // Route protégée pour créer une activité liée à une étape de roadtrip
 router.post('/:idRoadtrip/stages/:idStage/activities', auth, activityController.createActivityForStage);
