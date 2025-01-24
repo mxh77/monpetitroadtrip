@@ -35,7 +35,11 @@ router.post('/:idRoadtrip/stages/:idStage/accommodations', auth, upload.fields([
 ]), accommodationController.createAccommodationForStage);
 
 // Route protégée pour créer une activité liée à une étape de roadtrip
-router.post('/:idRoadtrip/stages/:idStage/activities', auth, activityController.createActivityForStage);
+router.post('/:idRoadtrip/stages/:idStage/activities', auth, upload.fields([
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'photos', maxCount: 10 },
+    { name: 'documents', maxCount: 10 }
+]), activityController.createActivityForStage);
 
 /***************************/
 /********METHOD PUT*********/
