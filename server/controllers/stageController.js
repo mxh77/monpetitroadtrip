@@ -134,7 +134,7 @@ export const updateStage = async (req, res) => {
         if ('departureDateTime' in updateData) stage.departureDateTime = updateData.departureDateTime;
         if ('nights' in updateData) stage.nights = updateData.nights;
         if ('notes' in updateData) stage.notes = updateData.notes;
-        
+
 
         // Mettre à jour les hébergements
         if (Array.isArray(updateData.accommodations)) {
