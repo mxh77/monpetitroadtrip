@@ -113,25 +113,28 @@ export const updateStage = async (req, res) => {
 
         // Mettre à jour les champs de l'étape
         if (updateData.name) stage.name = updateData.name;
-        if (updateData.address) {
-            stage.address = updateData.address;
-            // Obtenir les coordonnées géographiques à partir de l'adresse
-            try {
-            const coordinates = await getCoordinates(updateData.address);
-            stage.latitude = coordinates.lat;
-            stage.longitude = coordinates.lng;
-            } catch (error) {
-            console.error('Error getting coordinates:', error);
+        if ('address' in updateData) {
+            if (updateData.address) {
+                stage.address = updateData.address;
+                // Obtenir les coordonnées géographiques à partir de l'adresse
+                try {
+                    const coordinates = await getCoordinates(updateData.address);
+                    stage.latitude = coordinates.lat;
+                    stage.longitude = coordinates.lng;
+                } catch (error) {
+                    console.error('Error getting coordinates:', error);
+                }
+            } else {
+                stage.address = '';
+                stage.latitude = null;
+                stage.longitude = null;
             }
-        } else {
-            stage.address = '';
-            stage.latitude = null;
-            stage.longitude = null;
         }
-        stage.arrivalDateTime = updateData.arrivalDateTime;
-        stage.departureDateTime = updateData.departureDateTime;
-        stage.nights = updateData.nights;
-        stage.notes = updateData.notes;
+        if ('arrivalDateTime' in updateData) stage.arrivalDateTime = updateData.arrivalDateTime;
+        if ('departureDateTime' in updateData) stage.departureDateTime = updateData.departureDateTime;
+        if ('nights' in updateData) stage.nights = updateData.nights;
+        if ('notes' in updateData) stage.notes = updateData.notes;
+        
 
         // Mettre à jour les hébergements
         if (Array.isArray(updateData.accommodations)) {
