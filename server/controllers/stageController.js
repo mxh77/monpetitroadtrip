@@ -117,17 +117,21 @@ export const updateStage = async (req, res) => {
             stage.address = updateData.address;
             // Obtenir les coordonnées géographiques à partir de l'adresse
             try {
-                const coordinates = await getCoordinates(updateData.address);
-                stage.latitude = coordinates.lat;
-                stage.longitude = coordinates.lng;
+            const coordinates = await getCoordinates(updateData.address);
+            stage.latitude = coordinates.lat;
+            stage.longitude = coordinates.lng;
             } catch (error) {
-                console.error('Error getting coordinates:', error);
+            console.error('Error getting coordinates:', error);
             }
+        } else {
+            stage.address = '';
+            stage.latitude = null;
+            stage.longitude = null;
         }
-        if (updateData.arrivalDateTime) stage.arrivalDateTime = updateData.arrivalDateTime;
-        if (updateData.departureDateTime) stage.departureDateTime = updateData.departureDateTime;
-        if (updateData.nights) stage.nights = updateData.nights;
-        if (updateData.notes) stage.notes = updateData.notes;
+        stage.arrivalDateTime = updateData.arrivalDateTime;
+        stage.departureDateTime = updateData.departureDateTime;
+        stage.nights = updateData.nights;
+        stage.notes = updateData.notes;
 
         // Mettre à jour les hébergements
         if (Array.isArray(updateData.accommodations)) {
@@ -338,25 +342,25 @@ export const getStagesByRoadtrip = async (req, res) => {
 export const getStageById = async (req, res) => {
     try {
         const stage = await Stage.findById(req.params.idStage)
-        .populate({
-            path: 'accommodations',
-            populate: [
-                { path: 'photos', model: 'File' },
-                { path: 'documents', model: 'File' },
-                { path: 'thumbnail', model: 'File' }
-            ]
-        })
-        .populate({
-            path: 'activities',
-            populate: [
-                { path: 'photos', model: 'File' },
-                { path: 'documents', model: 'File' },
-                { path: 'thumbnail', model: 'File' }
-            ]
-        })
-        .populate('photos')
-        .populate('documents')
-        .populate('thumbnail');
+            .populate({
+                path: 'accommodations',
+                populate: [
+                    { path: 'photos', model: 'File' },
+                    { path: 'documents', model: 'File' },
+                    { path: 'thumbnail', model: 'File' }
+                ]
+            })
+            .populate({
+                path: 'activities',
+                populate: [
+                    { path: 'photos', model: 'File' },
+                    { path: 'documents', model: 'File' },
+                    { path: 'thumbnail', model: 'File' }
+                ]
+            })
+            .populate('photos')
+            .populate('documents')
+            .populate('thumbnail');
         console.log("ID Stage en paramètre : " + req.params.idStage);
 
         if (!stage) {

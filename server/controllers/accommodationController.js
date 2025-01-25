@@ -143,6 +143,8 @@ export const updateAccommodation = async (req, res) => {
             data = req.body;
         }
 
+        console.log("Updated Data: ", data);
+
         // Obtenir les coordonnées géographiques à partir de l'adresse
         let coordinates = {};
         if (data.address) {
@@ -156,18 +158,20 @@ export const updateAccommodation = async (req, res) => {
         }
 
         // Mettre à jour les champs de l'hébergement
-        if (data.name) accommodation.name = data.name;
-        if (data.address) accommodation.address = data.address;
-        if (data.website) accommodation.website = data.website;
-        if (data.phone) accommodation.phone = data.phone;
-        if (data.email) accommodation.email = data.email;
-        if (data.arrivalDateTime) accommodation.arrivalDateTime = data.arrivalDateTime;
-        if (data.departureDateTime) accommodation.departureDateTime = data.departureDateTime;
-        if (data.confirmationDateTime) accommodation.confirmationDateTime = data.confirmationDateTime;
-        if (data.reservationNumber) accommodation.reservationNumber = data.reservationNumber;
-        if (data.nights) accommodation.nights = data.nights;
-        if (data.price) accommodation.price = data.price;
-        if (data.notes) accommodation.notes = data.notes;
+        accommodation.name = data.name || accommodation.name; //Obligatoire
+        accommodation.address = data.address;
+        accommodation.website = data.website;
+        accommodation.phone = data.phone;
+        accommodation.email = data.email;
+        accommodation.arrivalDateTime = data.arrivalDateTime;
+        accommodation.departureDateTime = data.departureDateTime;
+        accommodation.confirmationDateTime = data.confirmationDateTime;
+        accommodation.reservationNumber = data.reservationNumber;
+        accommodation.nights = data.nights;
+        accommodation.price = data.price;
+        accommodation.notes = data.notes;
+
+        console.log("Accommodation: ", accommodation);
 
         // Gérer les suppressions différées
         if (data.existingFiles) {

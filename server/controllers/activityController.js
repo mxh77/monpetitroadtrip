@@ -159,18 +159,18 @@ export const updateActivity = async (req, res) => {
         }
 
         // Mettre à jour les champs de l'activité
-        activity.name = data.name || activity.name;
-        activity.address = data.address || activity.address;
-        activity.website = data.website || activity.website;
-        activity.phone = data.phone || activity.phone;
-        activity.email = data.email || activity.email;
-        activity.startDateTime = data.startDateTime || activity.startDateTime;
-        activity.endDateTime = data.endDateTime || activity.endDateTime;
-        activity.duration = data.duration || activity.duration;
-        activity.typeDuration = data.typeDuration || activity.typeDuration;
-        activity.reservationNumber = data.reservationNumber || activity.reservationNumber;
-        activity.price = data.price || activity.price;
-        activity.notes = data.notes || activity.notes;
+        activity.name = data.name || activity.name //Obligatoire
+        activity.address = data.address
+        activity.website = data.website
+        activity.phone = data.phone 
+        activity.email = data.email 
+        activity.startDateTime = data.startDateTime 
+        activity.endDateTime = data.endDateTime 
+        activity.duration = data.duration 
+        activity.typeDuration = data.typeDuration
+        activity.reservationNumber = data.reservationNumber
+        activity.price = data.price 
+        activity.notes = data.notes 
 
         // Gérer les suppressions différées
         if (data.existingFiles) {
