@@ -17,6 +17,9 @@ router.put('/:idActivity', auth, upload.fields([
     { name: 'documents', maxCount: 10 }
 ]), activityController.updateActivity);
 
+/********METHOD PATCH********/
+// Route protégée pour modifier les dates d'une activité
+router.patch('/:idActivity', auth, activityController.updateActivityDates);
 
 /********METHOD GET********/
 // Route protégée pour obtenir les informations d'une activité

@@ -118,7 +118,7 @@ export const createActivityForStage = async (req, res) => {
     }
 };
 
-// Méthode pour mettre à jour une activité
+// Méthode pour mettre à jour une activité (utilisé par la route PUT)
 export const updateActivity = async (req, res) => {
     try {
         const activity = await Activity.findById(req.params.idActivity);
@@ -132,18 +132,18 @@ export const updateActivity = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-      // Extraire les données JSON du champ 'data' si elles existent
-      let data = {};
-      if (req.body.data) {
-          try {
-              data = JSON.parse(req.body.data);
-          } catch (error) {
-              return res.status(400).json({ msg: 'Invalid JSON in data field' });
-          }
-      } else {
-          // Si 'data' n'est pas présent, utiliser les champs individuels
-          data = req.body;
-      }
+        // Extraire les données JSON du champ 'data' si elles existent
+        let data = {};
+        if (req.body.data) {
+            try {
+                data = JSON.parse(req.body.data);
+            } catch (error) {
+                return res.status(400).json({ msg: 'Invalid JSON in data field' });
+            }
+        } else {
+            // Si 'data' n'est pas présent, utiliser les champs individuels
+            data = req.body;
+        }
 
 
         // Obtenir les coordonnées géographiques à partir de l'adresse
@@ -162,15 +162,15 @@ export const updateActivity = async (req, res) => {
         activity.name = data.name || activity.name //Obligatoire
         activity.address = data.address
         activity.website = data.website
-        activity.phone = data.phone 
-        activity.email = data.email 
-        activity.startDateTime = data.startDateTime 
-        activity.endDateTime = data.endDateTime 
-        activity.duration = data.duration 
+        activity.phone = data.phone
+        activity.email = data.email
+        activity.startDateTime = data.startDateTime
+        activity.endDateTime = data.endDateTime
+        activity.duration = data.duration
         activity.typeDuration = data.typeDuration
         activity.reservationNumber = data.reservationNumber
-        activity.price = data.price 
-        activity.notes = data.notes 
+        activity.price = data.price
+        activity.notes = data.notes
 
         // Gérer les suppressions différées
         if (data.existingFiles) {
@@ -251,6 +251,46 @@ export const updateActivity = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
+// Méthode pour mettre à jour les dates d'une activité (utilisé par la route PATCH)
+export const updateActivityDates = async (req, res) => {
+    try {
+        const activity = await Activity.findById(req.params.idActivity);
+
+        if (!activity) {
+            return res.status(404).json({ msg: 'Activité non trouvée' });
+        }
+
+        // Vérifier si l'utilisateur est le propriétaire de l'activité
+        if (activity.userId.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        // Extraire les données JSON du champ 'data' si elles existent
+        let data = {};
+        if (req.body.data) {
+            try {
+                data = JSON.parse(req.body.data);
+            } catch (error) {
+                return res.status(400).json({ msg: 'Invalid JSON in data field' });
+            }
+        } else {
+            // Si 'data' n'est pas présent, utiliser les champs individuels
+            data = req.body;
+        }
+
+        // Mettre à jour les dates de l'activité
+        activity.startDateTime = data.startDateTime;
+        activity.endDateTime = data.endDateTime;
+
+        await activity.save();
+        res.json(activity);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
 
 // Méthode pour obtenir les informations d'une activité
 export const getActivityById = async (req, res) => {
