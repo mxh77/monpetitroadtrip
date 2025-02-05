@@ -19,7 +19,7 @@ router.put('/:idActivity', auth, upload.fields([
 
 /********METHOD PATCH********/
 // Route protégée pour modifier les dates d'une activité
-router.patch('/:idActivity', auth, activityController.updateActivityDates);
+router.patch('/:idActivity/dates', auth, activityController.updateActivityDates);
 
 /********METHOD GET********/
 // Route protégée pour obtenir les informations d'une activité

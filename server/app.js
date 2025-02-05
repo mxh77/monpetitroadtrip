@@ -37,7 +37,7 @@ app.use(cookieParser());
 // CORS
 app.use(cors({
   origin: '*', // Vous pouvez restreindre cela à votre domaine spécifique
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
