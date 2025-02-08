@@ -4,6 +4,7 @@ import Roadtrip from '../models/Roadtrip.js';
 import File from '../models/File.js';
 import { calculateTravelTime, getCoordinates } from '../utils/googleMapsUtils.js';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
+import { checkDateTimeConsistency } from '../utils/dateUtils.js';
 
 // Méthode pour créer un nouvel arrêt pour un roadtrip donné
 export const createStopForRoadtrip = async (req, res) => {
@@ -117,6 +118,7 @@ export const createStopForRoadtrip = async (req, res) => {
 // Méthode pour mettre à jour un arrêt
 export const updateStop = async (req, res) => {
     try {
+        console.log('Updating stop:', req.params.idStop);
         const stop = await Stop.findById(req.params.idStop);
 
         if (!stop) {
@@ -262,6 +264,10 @@ export const updateStop = async (req, res) => {
             }));
         }
 
+        // Réactualiser le temps de trajet pour l'étape mise à jour
+        console.log('Refreshing travel time for stop:', stopUpdated._id);
+        await refreshTravelTimeForStep(stopUpdated);
+
         res.json(stopUpdated);
     } catch (err) {
         console.error(err.message);
@@ -349,5 +355,79 @@ export const deleteStop = async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
+    }
+};
+
+// Wrapper pour appeler refreshTravelTimeForStep avec req et res
+export const refreshTravelTimeForStepWrapper = async (req, res) => {
+    try {
+        const stop = await Stop.findById(req.params.idStop);
+
+        if (!stop) {
+            return res.status(404).json({ msg: 'Stop not found' });
+        }
+
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'arrêt
+        const roadtrip = await Roadtrip.findById(stop.roadtripId);
+
+        if (!roadtrip) {
+            return res.status(404).json({ msg: 'Roadtrip not found' });
+        }
+
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip
+        if (roadtrip.userId.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        const updatedStop = await refreshTravelTimeForStep(stop);
+        res.json(updatedStop);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
+// Méthode pour réactualiser le temps de trajet d'un arrêt par rapport à l'étape précédente
+export const refreshTravelTimeForStep = async (stop) => {
+    try {
+        console.log('Refreshing travel time for stop:', stop._id);
+
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'arrêt
+        const roadtrip = await Roadtrip.findById(stop.roadtripId);
+
+        if (!roadtrip) {
+            throw new Error('Roadtrip not found');
+        }
+
+        // Récupérer le step précédent (stage ou stop) pour calculer le temps de trajet
+        const lastStages = await Stage.find({ roadtripId: roadtrip._id, arrivalDateTime: { $lt: stop.arrivalDateTime } }).sort({ arrivalDateTime: -1 }).limit(1);
+        const lastStops = await Stop.find({ roadtripId: roadtrip._id, arrivalDateTime: { $lt: stop.arrivalDateTime } }).sort({ arrivalDateTime: -1 }).limit(1);
+
+        // Combiner les résultats et trouver le step le plus proche
+        const lastSteps = [...lastStages, ...lastStops].sort((a, b) => new Date(b.arrivalDateTime) - new Date(a.arrivalDateTime));
+        const lastStep = lastSteps.length > 0 ? lastSteps[0] : null;
+
+        let travelTime = null;
+        let isArrivalTimeConsistent = true;
+        if (lastStep) {
+            try {
+                travelTime = await calculateTravelTime(lastStep.address, stop.address);
+                console.log('Travel time:', travelTime);
+
+                // Vérifier la cohérence des dates/heures
+                isArrivalTimeConsistent = checkDateTimeConsistency(lastStep.departureDateTime, stop.arrivalDateTime, travelTime);
+            } catch (error) {
+                console.error('Error calculating travel time:', error);
+            }
+        }
+
+        stop.travelTime = travelTime;
+        stop.isArrivalTimeConsistent = isArrivalTimeConsistent;
+        const updatedStop = await stop.save();
+
+        return updatedStop;
+    } catch (err) {
+        console.error(err.message);
+        throw new Error('Error refreshing travel time for stop');
     }
 };

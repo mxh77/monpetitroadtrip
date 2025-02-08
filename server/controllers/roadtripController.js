@@ -5,6 +5,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
 import dotenv from 'dotenv';
+import { calculateTravelTime } from '../utils/googleMapsUtils.js';
+import Stage from '../models/Stage.js';
+import Stop from '../models/Stop.js';
+import { checkDateTimeConsistency } from '../utils/dateUtils.js';
 
 dotenv.config();
 
@@ -64,8 +68,8 @@ export const createRoadtrip = async (req, res) => {
             stops: data.stops
         });
 
-          // Télécharger le fichier thumbnail s'il existe
-          if (req.files && req.files.thumbnail) {
+        // Télécharger le fichier thumbnail s'il existe
+        if (req.files && req.files.thumbnail) {
             console.log('Uploading thumbnail...');
             const url = await uploadToGCS(req.files.thumbnail[0], newRoadtrip._id);
             const file = new File({ url, type: 'thumbnail' });
@@ -394,10 +398,124 @@ export const getRoadtripById = async (req, res) => {
             return stage;
         });
 
+
         roadtrip.stages = stagesWithFiles;
 
-        res.json(roadtrip);
+        // Trier les `stages` par `arrivalDateTime`
+        const sortedStages = roadtrip.stages
+            .map(stage => stage.toObject())
+            .sort((a, b) => new Date(a.arrivalDateTime) - new Date(b.arrivalDateTime));
 
+        // Trier les `stops` par `arrivalDateTime`
+        const sortedStops = roadtrip.stops
+            .map(stop => stop.toObject())
+            .sort((a, b) => new Date(a.arrivalDateTime) - new Date(b.arrivalDateTime));
+
+        // Ajouter les listes triées à la réponse
+        res.json({
+            ...roadtrip.toObject(),
+            stages: sortedStages,
+            stops: sortedStops
+        });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
+// Méthode pour réactualiser les temps de trajet entre chaque étape
+export const refreshTravelTimesForRoadtrip = async (req, res) => {
+    try {
+        const roadtrip = await Roadtrip.findById(req.params.idRoadtrip)
+            .populate({
+                path: 'stages',
+                populate: [
+                    {
+                        path: 'accommodations',
+                        populate: [
+                            { path: 'photos', model: 'File' },
+                            { path: 'documents', model: 'File' },
+                            { path: 'thumbnail', model: 'File' }
+                        ]
+                    },
+                    {
+                        path: 'activities',
+                        populate: [
+                            { path: 'photos', model: 'File' },
+                            { path: 'documents', model: 'File' },
+                            { path: 'thumbnail', model: 'File' }
+                        ]
+                    }
+                ]
+            })
+            .populate({
+                path: 'stops',
+                populate: [
+                    { path: 'photos', model: 'File' },
+                    { path: 'documents', model: 'File' },
+                    { path: 'thumbnail', model: 'File' }
+                ]
+            })
+            .populate('photos')
+            .populate('documents')
+            .populate('thumbnail');
+
+        if (!roadtrip) {
+            return res.status(404).json({ msg: 'Roadtrip not found' });
+        }
+
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip
+        if (roadtrip.userId.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        // Initialiser les stages et stops s'ils sont undefined
+        roadtrip.stages = roadtrip.stages || [];
+        roadtrip.stops = roadtrip.stops || [];
+
+        // Combiner les stages et les stops dans un seul tableau
+        const steps = [
+            ...roadtrip.stages.map(stage => ({ ...stage.toObject(), type: 'stage' })),
+            ...roadtrip.stops.map(stop => ({ ...stop.toObject(), type: 'stop' }))
+        ];
+
+        // Trier les étapes par ordre croissant de arrivalDateTime
+        steps.sort((a, b) => new Date(a.arrivalDateTime) - new Date(b.arrivalDateTime));
+
+        // Calculer et vérifier la cohérence des dates/heures pour chaque étape sauf la première
+        const results = [];
+        for (let i = 1; i < steps.length; i++) {
+            const step = steps[i];
+            const previousStep = steps[i - 1];
+
+            const origin = previousStep.address;
+            const destination = step.address;
+            const arrivalDateTime = step.arrivalDateTime;
+
+            console.log("Origin:", origin);
+            console.log("Destination:", destination);
+            const travelTime = await calculateTravelTime(origin, destination, arrivalDateTime);
+            console.log("Travel time:", travelTime);
+
+            // Vérifier la cohérence des dates/heures
+            console.log("Previous Step Departure DateTime:", previousStep.departureDateTime);
+            console.log("Step Arrival DateTime:", step.arrivalDateTime, "\n");
+            const isConsistent = checkDateTimeConsistency(previousStep.departureDateTime, step.arrivalDateTime, travelTime);
+            results.push({
+                step: step,
+                travelTime: travelTime,
+                isConsistent: isConsistent
+            });
+
+            if (step.type === 'stage') {
+                await Stage.findByIdAndUpdate(step._id, { travelTime });
+            } else if (step.type === 'stop') {
+                await Stop.findByIdAndUpdate(step._id, { travelTime });
+            }
+        }
+
+        res.json({ steps: results });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');

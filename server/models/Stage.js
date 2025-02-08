@@ -12,6 +12,7 @@ const stageSchema = new Schema({
     arrivalDateTime: { type: Date },
     departureDateTime: { type: Date },
     travelTime: { type: Number, default: 0 },
+    isArrivalTimeConsistent: { type: Boolean, default: true }, // Nouveau champ pour stocker l'information de cohérence
     notes: { type: String, default: '' },
     photos: [{ type: Schema.Types.ObjectId, ref: 'File' }],
     documents: [{ type: Schema.Types.ObjectId, ref: 'File' }],

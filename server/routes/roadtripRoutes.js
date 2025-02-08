@@ -52,6 +52,13 @@ router.put('/:idRoadtrip', auth, upload.fields([
 ]), roadtripController.updateRoadtrip);
 
 /***************************/
+/********METHOD PATCH********/
+/***************************/
+// Route protégée pour réactualiser les temps de trajet entre chaque étape
+router.patch('/:idRoadtrip/refresh-travel-times', auth, roadtripController.refreshTravelTimesForRoadtrip);
+
+
+/***************************/
 /********METHOD GET*********/
 /***************************/
 // Route protégée pour obtenir les roadtrips de l'utilisateur

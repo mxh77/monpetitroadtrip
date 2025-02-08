@@ -17,6 +17,10 @@ router.put('/:idStop', auth, upload.fields([
     { name: 'documents', maxCount: 10 }
 ]), stopController.updateStop);
 
+/********METHOD PATCH ********/
+// Route pour calculer le travelTime d'une étape par rapport à la précédente
+router.patch('/:idStop/refresh-travel-time', auth, stopController.refreshTravelTimeForStepWrapper);
+
 /********METHOD GET********/
 // Route protégée pour obtenir les informations d'un arrêt
 router.get('/:idStop', auth, stopController.getStopById);

@@ -19,6 +19,10 @@ router.put('/:idStage', auth, upload.fields([
     { name: 'documents', maxCount: 10 }
 ]), stageController.updateStage);
 
+/********METHOD PATCH ********/
+// Route pour calculer le travelTime d'une étape par rapport à la précédente
+router.patch('/:idStage/refresh-travel-time', auth, stageController.refreshTravelTimeForStep);
+
 
 /********METHOD GET********/
 // Route protégée pour obtenir les informations d'une étape

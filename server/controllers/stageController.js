@@ -6,6 +6,8 @@ import Activity from '../models/Activity.js';
 import File from '../models/File.js';
 import { calculateTravelTime, getCoordinates } from '../utils/googleMapsUtils.js';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
+import e from 'express';
+import { checkDateTimeConsistency } from '../utils/dateUtils.js';
 
 // Méthode pour créer une nouvelle étape pour un roadtrip donné
 export const createStageForRoadtrip = async (req, res) => {
@@ -286,6 +288,9 @@ export const updateStage = async (req, res) => {
             .populate('accommodations')
             .populate('activities');
 
+        // Réactualiser le temps de trajet pour l'étape mise à jour
+        await refreshTravelTimeForStep(populatedStage);
+
         res.json(populatedStage);
 
         // Log de l'étape mise à jour avec le détail complet des accommodations et activities
@@ -418,6 +423,61 @@ export const deleteStage = async (req, res) => {
 
         await Stage.deleteOne({ _id: req.params.idStage });
         res.json({ msg: 'Stage removed' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
+//Méthode pour réactualiser le temps de trajet d'une étape par rapport à la précédente
+export const refreshTravelTimeForStep = async (req, res) => {
+    try {
+        console.log('Refreshing travel time for stage:', req.params.idStage);
+        const stage = await Stage.findById(req.params.idStage);
+
+        if (!stage) {
+            return res.status(404).json({ msg: 'Stage not found' });
+        }
+
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'étape 
+        const roadtrip = await Roadtrip.findById(stage.roadtripId);
+
+        if (!roadtrip) {
+            return res.status(404).json({ msg: 'Roadtrip not found' });
+        }
+
+        // Vérifier si l'utilisateur est le propriétaire du roadtrip
+        if (roadtrip.userId.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        // Récupérer le step précédent (stage ou stop) pour calculer le temps de trajet
+        const lastStages = await Stage.find({ roadtripId: roadtrip._id, arrivalDateTime: { $lt: stage.arrivalDateTime } }).sort({ arrivalDateTime: -1 }).limit(1);
+        const lastStops = await Stop.find({ roadtripId: roadtrip._id, arrivalDateTime: { $lt: stage.arrivalDateTime } }).sort({ arrivalDateTime: -1 }).limit(1);
+
+        // Combiner les résultats et trouver le step le plus proche
+        const lastSteps = [...lastStages, ...lastStops].sort((a, b) => new Date(b.arrivalDateTime) - new Date(a.arrivalDateTime));
+        const lastStep = lastSteps.length > 0 ? lastSteps[0] : null;
+
+        let travelTime = null;
+        let isArrivalTimeConsistent = true;
+        if (lastStep) {
+            try {
+                travelTime = await calculateTravelTime(lastStep.address, stage.address);
+                console.log('Travel time:', travelTime);
+
+                // Vérifier la cohérence des dates/heures
+                isArrivalTimeConsistent = checkDateTimeConsistency(lastStep.departureDateTime, stage.arrivalDateTime, travelTime);
+            } catch (error) {
+                console.error('Error calculating travel time:', error);
+            }
+        }
+
+        stage.travelTime = travelTime;
+        stage.isArrivalTimeConsistent = isArrivalTimeConsistent;
+        const updatedStage = await stage.save();
+
+        res.json(updatedStage);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
