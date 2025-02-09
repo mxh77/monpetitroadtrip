@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
 import dotenv from 'dotenv';
 import { calculateTravelTime } from '../utils/googleMapsUtils.js';
-import Stage from '../models/Stage.js';
+import Step from '../models/Step.js';
 import Stop from '../models/Stop.js';
 import { checkDateTimeConsistency } from '../utils/dateUtils.js';
 
@@ -64,8 +64,7 @@ export const createRoadtrip = async (req, res) => {
             endDateTime: data.endDateTime,
             currency: data.currency,
             notes: data.notes,
-            stages: data.stages,
-            stops: data.stops
+            steps: data.steps
         });
 
         // Télécharger le fichier thumbnail s'il existe
@@ -125,8 +124,7 @@ export const updateRoadtrip = async (req, res) => {
         if (data.endDateTime) roadtrip.endDateTime = data.endDateTime;
         if (data.currency) roadtrip.currency = data.currency;
         if (data.notes) roadtrip.notes = data.notes;
-        if (data.stages) roadtrip.stages = data.stages;
-        if (data.stops) roadtrip.stops = data.stops;
+        if (data.steps) roadtrip.steps = data.steps;
 
         // Gérer les suppressions différées
         if (data.existingFiles) {
@@ -262,6 +260,125 @@ export const deleteRoadtrip = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
+        // Supprimer le thumbnail associé au roadtrip
+        if (roadtrip.thumbnail) {
+            const thumbnail = await File.findById(roadtrip.thumbnail);
+            if (thumbnail) {
+                await deleteFromGCS(thumbnail.url);
+                await thumbnail.deleteOne();
+            }
+        }
+
+        // Supprimer les photos associés au roadtrip
+        if (roadtrip.photos && roadtrip.photos.length > 0) {
+            await Promise.all(roadtrip.photos.map(async (photoId) => {
+                const photo = await File.findById(photoId);
+                if (photo) {
+                    await deleteFromGCS(photo.url);
+                    await photo.deleteOne();
+                }
+            }
+            ));
+        }
+
+        // Supprimer les documents associés au roadtrip
+        if (roadtrip.documents && roadtrip.documents.length > 0) {
+            await Promise.all(roadtrip.documents.map(async (documentId) => {
+                const document = await File.findById(documentId);
+                if (document) {
+                    await deleteFromGCS(document.url);
+                    await document.deleteOne();
+                }
+            }
+            ));
+        }
+
+        // Supprimer les étapes associées au roadtrip
+        if (roadtrip.steps && roadtrip.steps.length > 0) {
+            await Promise.all(roadtrip.steps.map(async (stepId) => {
+                const step = await Step.findById(stepId);
+                if (step) {
+                    if (step.accommodations && step.accommodations.length > 0) {
+                        await Promise.all(step.accommodations.map(async (accommodationId) => {
+                            const accommodation = await Accommodation.findById(accommodationId);
+                            if (accommodation) {
+                                if (accommodation.thumbnail) {
+                                    const thumbnail = await File.findById(accommodation.thumbnail);
+                                    if (thumbnail) {
+                                        await deleteFromGCS(thumbnail.url);
+                                        await thumbnail.deleteOne();
+                                    }
+                                }
+                                if (accommodation.photos && accommodation.photos.length > 0) {
+                                    await Promise.all(accommodation.photos.map(async (photoId) => {
+                                        const photo = await File.findById(photoId);
+                                        if (photo) {
+                                            await deleteFromGCS(photo.url);
+                                            await photo.deleteOne();
+                                        }
+                                    }
+                                    ));
+                                }
+                                if (accommodation.documents && accommodation.documents.length > 0) {
+                                    await Promise.all(accommodation.documents.map(async (documentId) => {
+                                        const document = await File.findById(documentId);
+                                        if (document) {
+                                            await deleteFromGCS(document.url);
+                                            await document.deleteOne();
+                                        }
+                                    }
+                                    ));
+                                }
+                                await accommodation.deleteOne();
+                            }
+                        }
+                        ));
+                    }
+
+                    if (step.activities && step.activities.length > 0) {
+                        await Promise.all(step.activities.map(async (activityId) => {
+                            const activity = await Activity.findById(activityId);
+                            if (activity) {
+                                if (activity.thumbnail) {
+                                    const thumbnail = await File.findById(activity.thumbnail);
+                                    if (thumbnail) {
+                                        await deleteFromGCS(thumbnail.url);
+                                        await thumbnail.deleteOne();
+                                    }
+                                }
+                                if (activity.photos && activity.photos.length > 0) {
+                                    await Promise.all(activity.photos.map(async (photoId) => {
+                                        const photo = await File.findById(photoId);
+                                        if (photo) {
+                                            await deleteFromGCS(photo.url);
+                                            await photo.deleteOne();
+                                        }
+                                    }
+                                    ));
+                                }
+                                if (activity.documents && activity.documents.length > 0) {
+                                    await Promise.all(activity.documents.map(async (documentId) => {
+                                        const document = await File.findById(documentId);
+                                        if (document) {
+                                            await deleteFromGCS(document.url);
+                                            await document.deleteOne();
+                                        }
+                                    }
+                                    ));
+                                }
+                                await activity.deleteOne();
+                            }
+                        }
+                        ));
+                    }
+
+                    await step.deleteOne();
+                }
+            }
+            ));
+        }
+
+        // Supprimer le roadtrip
         await Roadtrip.deleteOne({ _id: req.params.idRoadtrip });
 
         res.json({ msg: 'Roadtrip removed' });
@@ -275,17 +392,16 @@ export const deleteRoadtrip = async (req, res) => {
 export const getUserRoadtrips = async (req, res) => {
     try {
         const roadtrips = await Roadtrip.find({ userId: req.user.id })
-            .populate('stages')
-            .populate('stops')
+            .populate('steps')
             .populate({
-                path: 'stages',
+                path: 'steps',
                 populate: {
                     path: 'accommodations',
                     model: 'Accommodation'
                 }
             })
             .populate({
-                path: 'stages',
+                path: 'steps',
                 populate: {
                     path: 'activities',
                     model: 'Activity'
@@ -306,10 +422,9 @@ export const getUserRoadtrips = async (req, res) => {
 export const getRoadtripById = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip)
-            .populate('stages')
-            .populate('stops')
+            .populate('steps')
             .populate({
-                path: 'stages',
+                path: 'steps',
                 populate: {
                     path: 'accommodations',
                     populate: [
@@ -320,7 +435,7 @@ export const getRoadtripById = async (req, res) => {
                 }
             })
             .populate({
-                path: 'stages',
+                path: 'steps',
                 populate: {
                     path: 'activities',
                     populate: [
@@ -329,14 +444,6 @@ export const getRoadtripById = async (req, res) => {
                         { path: 'thumbnail', model: 'File' }
                     ]
                 }
-            })
-            .populate({
-                path: 'stops',
-                populate: [
-                    { path: 'photos', model: 'File' },
-                    { path: 'documents', model: 'File' },
-                    { path: 'thumbnail', model: 'File' }
-                ]
             })
             .populate('photos')
             .populate('documents')
@@ -352,8 +459,8 @@ export const getRoadtripById = async (req, res) => {
         }
 
         // Ajouter les URLs aux attributs thumbnail, photos et documents pour chaque accommodation et activity
-        const stagesWithFiles = roadtrip.stages.map(stage => {
-            stage.accommodations = stage.accommodations.map(accommodation => {
+        const stepsWithFiles = roadtrip.steps.map(step => {
+            step.accommodations = step.accommodations.map(accommodation => {
                 if (accommodation.thumbnail) {
                     accommodation.thumbnailUrl = accommodation.thumbnail.url;
                 }
@@ -374,7 +481,7 @@ export const getRoadtripById = async (req, res) => {
                 return accommodation;
             });
 
-            stage.activities = stage.activities.map(activity => {
+            step.activities = step.activities.map(activity => {
                 if (activity.thumbnail) {
                     activity.thumbnailUrl = activity.thumbnail.url;
                 }
@@ -395,27 +502,21 @@ export const getRoadtripById = async (req, res) => {
                 return activity;
             });
 
-            return stage;
+            return step;
         });
 
+        roadtrip.steps = stepsWithFiles;
 
-        roadtrip.stages = stagesWithFiles;
-
-        // Trier les `stages` par `arrivalDateTime`
-        const sortedStages = roadtrip.stages
-            .map(stage => stage.toObject())
-            .sort((a, b) => new Date(a.arrivalDateTime) - new Date(b.arrivalDateTime));
-
-        // Trier les `stops` par `arrivalDateTime`
-        const sortedStops = roadtrip.stops
-            .map(stop => stop.toObject())
+        // Trier les `steps` par `arrivalDateTime`
+        const sortedSteps = roadtrip.steps
+            .map(step => step.toObject())
             .sort((a, b) => new Date(a.arrivalDateTime) - new Date(b.arrivalDateTime));
 
         // Ajouter les listes triées à la réponse
         res.json({
             ...roadtrip.toObject(),
-            stages: sortedStages,
-            stops: sortedStops
+            steps: sortedSteps
+
         });
 
     } catch (err) {
@@ -429,7 +530,7 @@ export const refreshTravelTimesForRoadtrip = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip)
             .populate({
-                path: 'stages',
+                path: 'steps',
                 populate: [
                     {
                         path: 'accommodations',
@@ -470,18 +571,11 @@ export const refreshTravelTimesForRoadtrip = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        // Initialiser les stages et stops s'ils sont undefined
-        roadtrip.stages = roadtrip.stages || [];
-        roadtrip.stops = roadtrip.stops || [];
-
-        // Combiner les stages et les stops dans un seul tableau
-        const steps = [
-            ...roadtrip.stages.map(stage => ({ ...stage.toObject(), type: 'stage' })),
-            ...roadtrip.stops.map(stop => ({ ...stop.toObject(), type: 'stop' }))
-        ];
-
         // Trier les étapes par ordre croissant de arrivalDateTime
-        steps.sort((a, b) => new Date(a.arrivalDateTime) - new Date(b.arrivalDateTime));
+        const steps = roadtrip.steps
+            .map(step => step.toObject())
+            .sort((a, b) => new Date(a.arrivalDateTime) - new Date(b.arrivalDateTime));
+
 
         // Calculer et vérifier la cohérence des dates/heures pour chaque étape sauf la première
         const results = [];
@@ -508,11 +602,11 @@ export const refreshTravelTimesForRoadtrip = async (req, res) => {
                 isConsistent: isConsistent
             });
 
-            if (step.type === 'stage') {
-                await Stage.findByIdAndUpdate(step._id, { travelTime });
-            } else if (step.type === 'stop') {
-                await Stop.findByIdAndUpdate(step._id, { travelTime });
-            }
+            // Mettre à jour le temps de trajet et le champ isArrivalTimeConsistent pour l'étape
+            step.travelTime = travelTime;
+            step.isArrivalTimeConsistent = isConsistent;
+            await step.save();
+                       
         }
 
         res.json({ steps: results });

@@ -14,8 +14,7 @@ const roadtripSchema = new Schema({
     photos: [{ type: Schema.Types.ObjectId, ref: 'File' }],
     documents: [{ type: Schema.Types.ObjectId, ref: 'File' }],
     thumbnail: { type: Schema.Types.ObjectId, ref: 'File' },
-    stages: [{ type: Schema.Types.ObjectId, ref: 'Stage' }],
-    stops: [{ type: Schema.Types.ObjectId, ref: 'Stop' }]
+    steps: [{ type: Schema.Types.ObjectId, ref: 'Step' }]
 });
 
 export default mongoose.model('Roadtrip', roadtripSchema);

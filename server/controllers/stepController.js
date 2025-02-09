@@ -1,6 +1,5 @@
 import Roadtrip from '../models/Roadtrip.js';
-import Stage from '../models/Stage.js';
-import Stop from '../models/Stop.js';
+import Step from '../models/Step.js';
 import Accommodation from '../models/Accommodation.js';
 import Activity from '../models/Activity.js';
 import File from '../models/File.js';
@@ -9,8 +8,8 @@ import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
 import e from 'express';
 import { checkDateTimeConsistency } from '../utils/dateUtils.js';
 
-// Méthode pour créer une nouvelle étape pour un roadtrip donné
-export const createStageForRoadtrip = async (req, res) => {
+// Méthode pour créer un nouveau step pour un roadtrip donné
+export const createStepForRoadtrip = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
@@ -24,11 +23,7 @@ export const createStageForRoadtrip = async (req, res) => {
         }
 
         // Récupérer le step précédent (stage ou stop) pour calculer le temps de trajet
-        const lastStages = await Stage.find({ roadtripId: req.params.idRoadtrip }).sort({ arrivalDateTime: -1 }).limit(1);
-        const lastStops = await Stop.find({ roadtripId: req.params.idRoadtrip }).sort({ arrivalDateTime: -1 }).limit(1);
-
-        // Combiner les résultats et trouver le step le plus proche
-        const lastSteps = [...lastStages, ...lastStops].sort((a, b) => new Date(b.arrivalDateTime) - new Date(a.arrivalDateTime));
+        const lastSteps = await Step.find({ roadtripId: roadtrip._id }).sort({ arrivalDateTime: -1 }).limit(1);
         const lastStep = lastSteps.length > 0 ? lastSteps[0] : null;
 
         let travelTime = null;
@@ -50,7 +45,8 @@ export const createStageForRoadtrip = async (req, res) => {
             }
         }
 
-        const newStage = new Stage({
+        const newStep = new Step({
+            type: req.body.type, // Type par défaut si non fourni
             name: req.body.name, // Nom par défaut si non fourni
             address: req.body.address, // Adresse par défaut si non fournie
             latitude: coordinates.lat,
@@ -67,30 +63,30 @@ export const createStageForRoadtrip = async (req, res) => {
             travelTime: travelTime // Stocker le temps de trajet
         });
 
-        const stage = await newStage.save();
+        const step = await newStep.save();
 
-        // Ajouter l'ID de la nouvelle étape au tableau stages du roadtrip
-        roadtrip.stages.push(stage);
+        // Ajouter l'ID de la nouvelle étape au tableau steps du roadtrip
+        roadtrip.steps.push(step);
         await roadtrip.save();
 
-        res.json(stage);
+        res.json(step);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
     }
 };
 
-// Méthode pour mettre à jour une étape
-export const updateStage = async (req, res) => {
+// Méthode pour mettre à jour un step
+export const updateStep = async (req, res) => {
     try {
-        const stage = await Stage.findById(req.params.idStage);
+        const step = await Step.findById(req.params.idStep);
 
-        if (!stage) {
-            return res.status(404).json({ msg: 'Stage not found' });
+        if (!step) {
+            return res.status(404).json({ msg: 'step not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'étape 
-        const roadtrip = await Roadtrip.findById(stage.roadtripId);
+        const roadtrip = await Roadtrip.findById(step.roadtripId);
 
         if (!roadtrip) {
             return res.status(404).json({ msg: 'Roadtrip not found' });
@@ -114,80 +110,83 @@ export const updateStage = async (req, res) => {
         const updateData = { ...data, ...req.body };
 
         // Mettre à jour les champs de l'étape
-        if (updateData.name) stage.name = updateData.name;
+        if (updateData.name) step.name = updateData.name;
         if ('address' in updateData) {
             if (updateData.address) {
-                stage.address = updateData.address;
+                step.address = updateData.address;
                 // Obtenir les coordonnées géographiques à partir de l'adresse
                 try {
                     const coordinates = await getCoordinates(updateData.address);
-                    stage.latitude = coordinates.lat;
-                    stage.longitude = coordinates.lng;
+                    step.latitude = coordinates.lat;
+                    step.longitude = coordinates.lng;
                 } catch (error) {
                     console.error('Error getting coordinates:', error);
                 }
             } else {
-                stage.address = '';
-                stage.latitude = null;
-                stage.longitude = null;
+                step.address = '';
+                step.latitude = null;
+                step.longitude = null;
             }
         }
-        if ('arrivalDateTime' in updateData) stage.arrivalDateTime = updateData.arrivalDateTime;
-        if ('departureDateTime' in updateData) stage.departureDateTime = updateData.departureDateTime;
-        if ('nights' in updateData) stage.nights = updateData.nights;
-        if ('notes' in updateData) stage.notes = updateData.notes;
+        if ('arrivalDateTime' in updateData) step.arrivalDateTime = updateData.arrivalDateTime;
+        if ('departureDateTime' in updateData) step.departureDateTime = updateData.departureDateTime;
+        if ('nights' in updateData) step.nights = updateData.nights;
+        if ('notes' in updateData) step.notes = updateData.notes;
 
 
-        // Mettre à jour les hébergements
-        if (Array.isArray(updateData.accommodations)) {
-            for (const accommodation of updateData.accommodations) {
-                if (accommodation._id) {
-                    // Obtenir les coordonnées géographiques à partir de l'adresse de l'hébergement
-                    if (accommodation.address) {
-                        try {
-                            const coordinates = await getCoordinates(accommodation.address);
-                            accommodation.latitude = coordinates.lat;
-                            accommodation.longitude = coordinates.lng;
-                        } catch (error) {
-                            console.error('Error getting coordinates for accommodation:', error);
+        // Mettre à jour les hébergements si type = 'stage'
+        if (updateData.type === 'stage') {
+            if (Array.isArray(updateData.accommodations)) {
+                for (const accommodation of updateData.accommodations) {
+                    if (accommodation._id) {
+                        // Obtenir les coordonnées géographiques à partir de l'adresse de l'hébergement
+                        if (accommodation.address) {
+                            try {
+                                const coordinates = await getCoordinates(accommodation.address);
+                                accommodation.latitude = coordinates.lat;
+                                accommodation.longitude = coordinates.lng;
+                            } catch (error) {
+                                console.error('Error getting coordinates for accommodation:', error);
+                            }
                         }
+                        // Mettre à jour l'hébergement existant
+                        await Accommodation.findByIdAndUpdate(accommodation._id, accommodation, { new: true, runValidators: true });
+                    } else {
+                        // Ajouter un nouvel hébergement
+                        const newAccommodation = new Accommodation(accommodation);
+                        newAccommodation.stepId = step._id;
+                        newAccommodation.userId = req.user.id; // Assurez-vous que l'utilisateur est défini
+                        await newAccommodation.save();
+                        step.accommodations.push(newAccommodation._id);
                     }
-                    // Mettre à jour l'hébergement existant
-                    await Accommodation.findByIdAndUpdate(accommodation._id, accommodation, { new: true, runValidators: true });
-                } else {
-                    // Ajouter un nouvel hébergement
-                    const newAccommodation = new Accommodation(accommodation);
-                    newAccommodation.stageId = stage._id;
-                    newAccommodation.userId = req.user.id; // Assurez-vous que l'utilisateur est défini
-                    await newAccommodation.save();
-                    stage.accommodations.push(newAccommodation._id);
                 }
             }
         }
-
-        // Mettre à jour les activités
-        if (Array.isArray(updateData.activities)) {
-            for (const activity of updateData.activities) {
-                if (activity._id) {
-                    // Obtenir les coordonnées géographiques à partir de l'adresse de l'activité
-                    if (activity.address) {
-                        try {
-                            const coordinates = await getCoordinates(activity.address);
-                            activity.latitude = coordinates.lat;
-                            activity.longitude = coordinates.lng;
-                        } catch (error) {
-                            console.error('Error getting coordinates for activity:', error);
+        // Mettre à jour les activités si type = 'stage'
+        if (updateData.type === 'stage') {
+            if (Array.isArray(updateData.activities)) {
+                for (const activity of updateData.activities) {
+                    if (activity._id) {
+                        // Obtenir les coordonnées géographiques à partir de l'adresse de l'activité
+                        if (activity.address) {
+                            try {
+                                const coordinates = await getCoordinates(activity.address);
+                                activity.latitude = coordinates.lat;
+                                activity.longitude = coordinates.lng;
+                            } catch (error) {
+                                console.error('Error getting coordinates for activity:', error);
+                            }
                         }
+                        // Mettre à jour l'activité existante   
+                        await Activity.findByIdAndUpdate(activity._id, activity, { new: true, runValidators: true });
+                    } else {
+                        // Ajouter une nouvelle activité
+                        const newActivity = new Activity(activity);
+                        newActivity.stepId = step._id;
+                        newActivity.userId = req.user.id; // Assurez-vous que l'utilisateur est défini
+                        await newActivity.save();
+                        step.activities.push(newActivity._id);
                     }
-                    // Mettre à jour l'activité existante   
-                    await Activity.findByIdAndUpdate(activity._id, activity, { new: true, runValidators: true });
-                } else {
-                    // Ajouter une nouvelle activité
-                    const newActivity = new Activity(activity);
-                    newActivity.stageId = stage._id;
-                    newActivity.userId = req.user.id; // Assurez-vous que l'utilisateur est défini
-                    await newActivity.save();
-                    stage.activities.push(newActivity._id);
                 }
             }
         }
@@ -206,10 +205,10 @@ export const updateStage = async (req, res) => {
                         console.log('File found, deleting from GCS and database:', fileToDelete.url);
                         await deleteFromGCS(fileToDelete.url);
                         await fileToDelete.deleteOne();
-                        stage.photos = stage.photos.filter(f => f.toString() !== fileId.toString());
-                        stage.documents = stage.documents.filter(f => f.toString() !== fileId.toString());
-                        if (stage.thumbnail && stage.thumbnail.toString() === fileId.toString()) {
-                            stage.thumbnail = null;
+                        step.photos = step.photos.filter(f => f.toString() !== fileId.toString());
+                        step.documents = step.documents.filter(f => f.toString() !== fileId.toString());
+                        if (step.thumbnail && step.thumbnail.toString() === fileId.toString()) {
+                            step.thumbnail = null;
                         }
                     } else {
                         console.log('File not found:', file.fileId);
@@ -223,79 +222,75 @@ export const updateStage = async (req, res) => {
             if (req.files.thumbnail) {
                 console.log('Uploading thumbnail...');
                 // Supprimer l'ancienne image thumbnail si elle existe
-                if (stage.thumbnail) {
-                    const oldThumbnail = await File.findById(stage.thumbnail);
+                if (step.thumbnail) {
+                    const oldThumbnail = await File.findById(step.thumbnail);
                     if (oldThumbnail) {
                         await deleteFromGCS(oldThumbnail.url);
                         await oldThumbnail.deleteOne();
                     }
                 }
-                const url = await uploadToGCS(req.files.thumbnail[0], stage._id);
+                const url = await uploadToGCS(req.files.thumbnail[0], step._id);
                 const file = new File({ url, type: 'thumbnail' });
                 await file.save();
-                stage.thumbnail = file._id;
+                step.thumbnail = file._id;
             }
             if (req.files.photos && req.files.photos.length > 0) {
                 console.log('Uploading photos...');
                 const photos = await Promise.all(req.files.photos.map(async (photo) => {
-                    const url = await uploadToGCS(photo, stage._id);
+                    const url = await uploadToGCS(photo, step._id);
                     const file = new File({ url, type: 'photo' });
                     await file.save();
                     return file._id;
                 }));
-                stage.photos.push(...photos);
-                console.log('Updated stage photos:', stage.photos);
+                step.photos.push(...photos);
+                console.log('Updated step photos:', step.photos);
             }
             if (req.files.documents && req.files.documents.length > 0) {
                 console.log('Uploading documents...');
                 const documents = await Promise.all(req.files.documents.map(async (document) => {
-                    const url = await uploadToGCS(document, stage._id);
+                    const url = await uploadToGCS(document, step._id);
                     const file = new File({ url, type: 'document' });
                     await file.save();
                     return file._id;
                 }));
-                stage.documents.push(...documents);
-                console.log('Updated stage documents:', stage.documents);
+                step.documents.push(...documents);
+                console.log('Updated step documents:', step.documents);
             }
         }
 
-        const stageUpdated = await stage.save();
+        const stepUpdated = await step.save();
 
         // Ajouter les URLs aux attributs thumbnail, photos et documents
-        if (stageUpdated.thumbnail) {
-            const thumbnailFile = await File.findById(stageUpdated.thumbnail);
+        if (stepUpdated.thumbnail) {
+            const thumbnailFile = await File.findById(stepUpdated.thumbnail);
             if (thumbnailFile) {
-                stageUpdated.thumbnailUrl = thumbnailFile.url;
+                stepUpdated.thumbnailUrl = thumbnailFile.url;
             }
         }
 
-        if (stageUpdated.photos && stageUpdated.photos.length > 0) {
-            stageUpdated.photos = await Promise.all(stageUpdated.photos.map(async (photoId) => {
+        if (stepUpdated.photos && stepUpdated.photos.length > 0) {
+            stepUpdated.photos = await Promise.all(stepUpdated.photos.map(async (photoId) => {
                 const photoFile = await File.findById(photoId);
                 return photoFile ? { _id: photoId, url: photoFile.url } : { _id: photoId };
             }));
         }
 
-        if (stageUpdated.documents && stageUpdated.documents.length > 0) {
-            stageUpdated.documents = await Promise.all(stageUpdated.documents.map(async (documentId) => {
+        if (stepUpdated.documents && stepUpdated.documents.length > 0) {
+            stepUpdated.documents = await Promise.all(stepUpdated.documents.map(async (documentId) => {
                 const documentFile = await File.findById(documentId);
                 return documentFile ? { _id: documentId, url: documentFile.url } : { _id: documentId };
             }));
         }
 
         // Récupérer les accommodations et activities associés
-        const populatedStage = await Stage.findById(stageUpdated._id)
+        const populatedStep = await Step.findById(stepUpdated._id)
             .populate('accommodations')
             .populate('activities');
 
         // Réactualiser le temps de trajet pour l'étape mise à jour
-        await refreshTravelTimeForStep(populatedStage);
+        await refreshTravelTimeForStep(populatedStep);
 
-        res.json(populatedStage);
-
-        // Log de l'étape mise à jour avec le détail complet des accommodations et activities
-        //console.log("Stage updated : ", JSON.stringify(populatedStage, null, 2));
-
+        res.json(populatedStep);
 
     } catch (err) {
         console.error(err.message);
@@ -304,7 +299,7 @@ export const updateStage = async (req, res) => {
 };
 
 // Méthode pour obtenir les informations de toutes les étapes d'un roadtrip
-export const getStagesByRoadtrip = async (req, res) => {
+export const getStepsByRoadtrip = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
 
@@ -317,8 +312,8 @@ export const getStagesByRoadtrip = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        //récupérer les étapes du roadtrip
-        const stages = await Stage.find({ roadtripId: req.params.idRoadtrip })
+        //récupérer les steps du roadtrip
+        const steps = await Step.find({ roadtripId: req.params.idRoadtrip })
             .populate({
                 path: 'accommodations',
                 populate: [
@@ -339,17 +334,17 @@ export const getStagesByRoadtrip = async (req, res) => {
             .populate('documents')
             .populate('thumbnail');
 
-        res.json(stages);
+        res.json(steps);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
     }
 };
 
-// Méthode pour obtenir les informations d'une étape
-export const getStageById = async (req, res) => {
+// Méthode pour obtenir les informations d'un step
+export const getStepById = async (req, res) => {
     try {
-        const stage = await Stage.findById(req.params.idStage)
+        const step = await Step.findById(req.params.idStep)
             .populate({
                 path: 'accommodations',
                 populate: [
@@ -369,14 +364,14 @@ export const getStageById = async (req, res) => {
             .populate('photos')
             .populate('documents')
             .populate('thumbnail');
-        console.log("ID Stage en paramètre : " + req.params.idStage);
+        console.log("ID Step en paramètre : " + req.params.idStep);
 
-        if (!stage) {
-            return res.status(404).json({ msg: 'Stage not found' });
+        if (!step) {
+            return res.status(404).json({ msg: 'Step not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'étape 
-        const roadtrip = await Roadtrip.findById(stage.roadtripId);
+        const roadtrip = await Roadtrip.findById(step.roadtripId);
 
         if (!roadtrip) {
             return res.status(404).json({ msg: 'Roadtrip not found' });
@@ -387,9 +382,7 @@ export const getStageById = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-
-
-        res.json(stage);
+        res.json(step);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -397,16 +390,16 @@ export const getStageById = async (req, res) => {
 };
 
 //Méthode pour supprimer une étape
-export const deleteStage = async (req, res) => {
+export const deleteStep = async (req, res) => {
     try {
-        const stage = await Stage.findById(req.params.idStage);
+        const step = await Step.findById(req.params.idStep);
 
-        if (!stage) {
-            return res.status(404).json({ msg: 'Stage not found' });
+        if (!step) {
+            return res.status(404).json({ msg: 'Step not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'étape 
-        const roadtrip = await Roadtrip.findById(stage.roadtripId);
+        const roadtrip = await Roadtrip.findById(step.roadtripId);
 
         if (!roadtrip) {
             return res.status(404).json({ msg: 'Roadtrip not found' });
@@ -417,12 +410,63 @@ export const deleteStage = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        // Supprimer l'étape de la liste des étapes du roadtrip
-        roadtrip.stages = roadtrip.stages.filter(stageId => stageId.toString() !== req.params.idStage);
+        // Supprimer le step de la liste des étapes du roadtrip
+        roadtrip.steps = roadtrip.steps.filter(stepId => stepId.toString() !== req.params.idStep);
         await roadtrip.save();
 
-        await Stage.deleteOne({ _id: req.params.idStage });
-        res.json({ msg: 'Stage removed' });
+        //Supprimer les fichiers associés
+        if (step.thumbnail) {
+            const thumbnail = await File.findById(step.thumbnail);
+            if (thumbnail) {
+                await deleteFromGCS(thumbnail.url);
+                await thumbnail.deleteOne();
+            }
+        }
+
+        if (step.photos && step.photos.length > 0) {
+            for (const photoId of step.photos) {
+                const photo = await File.findById(photoId);
+                if (photo) {
+                    await deleteFromGCS(photo.url);
+                    await photo.deleteOne();
+                }
+            }
+        }
+
+        if (step.documents && step.documents.length > 0) {
+            for (const documentId of step.documents) {
+                const document = await File.findById(documentId);
+                if (document) {
+                    await deleteFromGCS(document.url);
+                    await document.deleteOne();
+                }
+            }
+        }
+
+        // Supprimer les hébergements associés
+        if (step.accommodations && step.accommodations.length > 0) {
+            for (const accommodationId of step.accommodations) {
+                const accommodation = await Accommodation.findById(accommodationId);
+                if (accommodation) {
+                    await accommodation.deleteOne();
+                }
+            }
+        }
+
+        // Supprimer les activités associées    
+        if (step.activities && step.activities.length > 0) {
+            for (const activityId of step.activities) {
+                const activity = await Activity.findById(activityId);
+                if (activity) {
+                    await activity.deleteOne();
+                }
+            }
+        }
+
+        // Supprimer le step
+        await Step.deleteOne({ _id: req.params.idStep });
+
+        res.json({ msg: 'Step removed' });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -432,14 +476,14 @@ export const deleteStage = async (req, res) => {
 // Wrapper pour appeler refreshTravelTimeForStep avec req et res
 export const refreshTravelTimeForStepWrapper = async (req, res) => {
     try {
-        const stage = await Stage.findById(req.params.idStage);
+        const step = await Step.findById(req.params.idStep);
 
-        if (!stage) {
-            return res.status(404).json({ msg: 'stage not found' });
+        if (!step) {
+            return res.status(404).json({ msg: 'step not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'étape
-        const roadtrip = await Roadtrip.findById(stage.roadtripId);
+        const roadtrip = await Roadtrip.findById(step.roadtripId);
 
         if (!roadtrip) {
             return res.status(404).json({ msg: 'Roadtrip not found' });
@@ -450,8 +494,8 @@ export const refreshTravelTimeForStepWrapper = async (req, res) => {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        const updatedStage = await refreshTravelTimeForStep(stage);
-        res.json(updatedStage);
+        const updatedStep = await refreshTravelTimeForStep(step);
+        res.json(updatedStep);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -459,44 +503,40 @@ export const refreshTravelTimeForStepWrapper = async (req, res) => {
 };
 
 //Méthode pour réactualiser le temps de trajet d'une étape par rapport à la précédente
-export const refreshTravelTimeForStep = async (stage) => {
+export const refreshTravelTimeForStep = async (step) => {
     try {
-        console.log('Refreshing travel time for stage:', stage._id);
+        console.log('Refreshing travel time for step:', step._id);
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip de l'arrêt
-        const roadtrip = await Roadtrip.findById(stage.roadtripId);
+        const roadtrip = await Roadtrip.findById(step.roadtripId);
 
         if (!roadtrip) {
             throw new Error('Roadtrip not found');
         }
 
         // Récupérer le step précédent (stage ou stop) pour calculer le temps de trajet
-        const lastStages = await Stage.find({ roadtripId: roadtrip._id, arrivalDateTime: { $lt: stage.arrivalDateTime } }).sort({ arrivalDateTime: -1 }).limit(1);
-        const lastStops = await Stop.find({ roadtripId: roadtrip._id, arrivalDateTime: { $lt: stage.arrivalDateTime } }).sort({ arrivalDateTime: -1 }).limit(1);
-
-        // Combiner les résultats et trouver le step le plus proche
-        const lastSteps = [...lastStages, ...lastStops].sort((a, b) => new Date(b.arrivalDateTime) - new Date(a.arrivalDateTime));
-        const lastStep = lastSteps.length > 0 ? lastSteps[0] : null;
-
+        const lastSteps = await Step.find({ roadtripId: roadtrip._id }).sort({ arrivalDateTime: -1 }).limit(2);
+        const lastStep = lastSteps.length > 1 ? lastSteps[1] : null;
+        
         let travelTime = null;
         let isArrivalTimeConsistent = true;
         if (lastStep) {
             try {
-                travelTime = await calculateTravelTime(lastStep.address, stage.address);
+                travelTime = await calculateTravelTime(lastStep.address, step.address);
                 console.log('Travel time:', travelTime);
 
                 // Vérifier la cohérence des dates/heures
-                isArrivalTimeConsistent = checkDateTimeConsistency(lastStep.departureDateTime, stage.arrivalDateTime, travelTime);
+                isArrivalTimeConsistent = checkDateTimeConsistency(lastStep.departureDateTime, step.arrivalDateTime, travelTime);
             } catch (error) {
                 console.error('Error calculating travel time:', error);
             }
         }
 
-        stage.travelTime = travelTime;
-        stage.isArrivalTimeConsistent = isArrivalTimeConsistent;
-        const updatedStage = await stage.save();
+        step.travelTime = travelTime;
+        step.isArrivalTimeConsistent = isArrivalTimeConsistent;
+        const updatedStep = await step.save();
 
-        return updatedStage;
+        return updatedStep;
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');

@@ -1,8 +1,7 @@
 import express from 'express';
 import { auth } from '../middleware/auth.js';
 import * as roadtripController from '../controllers/roadtripController.js';
-import * as stageController from '../controllers/stageController.js';
-import * as stopController from '../controllers/stopController.js';
+import * as stepController from '../controllers/stepController.js';
 import * as accommodationController from '../controllers/accommodationController.js';
 import * as activityController from '../controllers/activityController.js';
 import multer from 'multer';
@@ -18,28 +17,27 @@ const upload = multer({ storage: multerStorage });
 /***************************/
 // Route protégée pour créer un roadtrip
 router.post('/', auth, upload.fields([
-    { name: 'thumbnail', maxCount: 1 }
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'photos', maxCount: 10 },
+    { name: 'documents', maxCount: 10 }
 ]), roadtripController.createRoadtrip);
 
-// Route protégée pour créer une étape pour un roadtrip
-router.post('/:idRoadtrip/stages', auth, stageController.createStageForRoadtrip);
-
-// Route protégée pour créer un stop lié à un roadtrip
-router.post('/:idRoadtrip/stops', auth, stopController.createStopForRoadtrip);
+// Route protégée pour créer un step pour un roadtrip
+router.post('/:idRoadtrip/steps', auth, stepController.createStepForRoadtrip);
 
 // Route protégée pour créer un hébergement lié à une étape de roadtrip
-router.post('/:idRoadtrip/stages/:idStage/accommodations', auth, upload.fields([
+router.post('/:idRoadtrip/steps/:idStep/accommodations', auth, upload.fields([
     { name: 'thumbnail', maxCount: 1 },
     { name: 'photos', maxCount: 10 },
     { name: 'documents', maxCount: 10 }
-]), accommodationController.createAccommodationForStage);
+]), accommodationController.createAccommodationForStep);
 
 // Route protégée pour créer une activité liée à une étape de roadtrip
-router.post('/:idRoadtrip/stages/:idStage/activities', auth, upload.fields([
+router.post('/:idRoadtrip/steps/:idStep/activities', auth, upload.fields([
     { name: 'thumbnail', maxCount: 1 },
     { name: 'photos', maxCount: 10 },
     { name: 'documents', maxCount: 10 }
-]), activityController.createActivityForStage);
+]), activityController.createActivityForStep);
 
 /***************************/
 /********METHOD PUT*********/
@@ -68,10 +66,8 @@ router.get('/', auth, roadtripController.getUserRoadtrips);
 router.get('/:idRoadtrip', auth, roadtripController.getRoadtripById);
 
 // Route protégée pour obtenir les étapes d'un roadtrip spécifique
-router.get('/:idRoadtrip/stages', auth, stageController.getStagesByRoadtrip);
+router.get('/:idRoadtrip/steps', auth, stepController.getStepsByRoadtrip);
 
-// Route protégée pour obtenir les stops d'un roadtrip spécifique
-router.get('/:idRoadtrip/stops', auth, stopController.getStopsByRoadtrip);
 
 /***************************/
 /********METHOD DELETE******/

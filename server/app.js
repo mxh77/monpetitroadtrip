@@ -7,8 +7,9 @@ import { fileURLToPath } from 'url';
 import { auth } from './middleware/auth.js';
 import authRoutes from './routes/authRoutes.js';
 import roadtripRoutes from './routes/roadtripRoutes.js';
-import stageRoutes from './routes/stageRoutes.js';
-import stopRoutes from './routes/stopRoutes.js';
+import stepRoutes from './routes/stepRoutes.js';
+// import stageRoutes from './routes/stageRoutes.js';
+// import stopRoutes from './routes/stopRoutes.js';
 import accommodationRoutes from './routes/accommodationRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
 import googleMapsRoutes from './routes/googleMapsRoutes.js';
@@ -56,8 +57,9 @@ app.get('/auth/login', (req, res) => {
 // Routes
 app.use('/auth', authRoutes);
 app.use('/roadtrips', auth, roadtripRoutes);
-app.use('/stages', auth, stageRoutes);
-app.use('/stops', auth, stopRoutes);
+app.use('/steps', auth, stepRoutes);
+// app.use('/stages', auth, stageRoutes);
+// app.use('/stops', auth, stopRoutes);
 app.use('/accommodations', auth, accommodationRoutes);
 app.use('/activities', auth, activityRoutes);
 app.use('/gm', auth, googleMapsRoutes);

@@ -1,31 +1,36 @@
 import Activity from '../models/Activity.js';
-import Stage from '../models/Stage.js';
+import Step from '../models/Step.js';
 import Roadtrip from '../models/Roadtrip.js';
 import File from '../models/File.js';
 import { getCoordinates } from '../utils/googleMapsUtils.js';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
 
 // Méthode pour créer une nouvelle activité pour une étape donnée
-export const createActivityForStage = async (req, res) => {
+export const createActivityForStep = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
-        const stage = await Stage.findById(req.params.idStage);
+        const step = await Step.findById(req.params.idStep);
 
         console.log("Roadtrip: ", roadtrip);
-        console.log("Stage", stage);
+        console.log("Step", step);
 
         if (!roadtrip) {
             return res.status(404).json({ msg: 'Roadtrip not found' });
         }
 
-        if (!stage) {
-            return res.status(404).json({ msg: 'Stage not found' });
+        if (!step) {
+            return res.status(404).json({ msg: 'Step not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip et de l'étape
-        if (roadtrip.userId.toString() !== req.user.id || stage.userId.toString() !== req.user.id) {
+        if (roadtrip.userId.toString() !== req.user.id || step.userId.toString() !== req.user.id) {
             return res.status(401).json({ msg: 'User not authorized' });
         }
+
+                // Vérifier si le type de l'étape est 'Stop' et retourner une erreur si des accommodations existent
+                if (step.type === 'Stop') {
+                    return res.status(400).json({ msg: "Erreur lors de la création du Step : un step de type 'Stop' ne peut pas contenir d'activités" });
+                }
 
         // Extraire les données JSON du champ 'data' si elles existent
         let data = {};
@@ -65,7 +70,7 @@ export const createActivityForStage = async (req, res) => {
             reservationNumber: data.reservationNumber,
             price: data.price,
             notes: data.notes,
-            stageId: req.params.idStage,
+            stepId: req.params.idStep,
             userId: req.user.id
         });
 
@@ -103,8 +108,8 @@ export const createActivityForStage = async (req, res) => {
         }
 
         // Ajouter l'activité à la liste des activités de l'étape
-        stage.activities.push(activity._id);
-        await stage.save();
+        step.activities.push(activity._id);
+        await step.save();
 
         await activity.save();
         res.status(201).json(activity);
@@ -351,10 +356,39 @@ export const deleteActivity = async (req, res) => {
         }
 
         // Supprimer l'activité de la liste des activités de l'étape
-        if (activity.stageId) {
-            const stage = await Stage.findById(activity.stageId);
-            stage.activities = stage.activities.filter(activityId => activityId.toString() !== req.params.idActivity);
-            await stage.save();
+        if (activity.stepId) {
+            const step = await Step.findById(activity.stepId);
+            step.activities = step.activities.filter(activityId => activityId.toString() !== req.params.idActivity);
+            await step.save();
+        }
+
+        // Supprimer les fichiers de Google Cloud Storage
+        if (activity.thumbnail) {
+            const thumbnailFile = await File.findById(activity.thumbnail);
+            if (thumbnailFile) {
+                await deleteFromGCS(thumbnailFile.url);
+                await thumbnailFile.deleteOne();
+            }
+        }
+
+        if (activity.photos && activity.photos.length > 0) {
+            await Promise.all(activity.photos.map(async (photoId) => {
+                const photoFile = await File.findById(photoId);
+                if (photoFile) {
+                    await deleteFromGCS(photoFile.url);
+                    await photoFile.deleteOne();
+                }
+            }));
+        }
+
+        if (activity.documents && activity.documents.length > 0) {
+            await Promise.all(activity.documents.map(async (documentId) => {
+                const documentFile = await File.findById(documentId);
+                if (documentFile) {
+                    await deleteFromGCS(documentFile.url);
+                    await documentFile.deleteOne();
+                }
+            }));
         }
 
         // Supprimer l'activité

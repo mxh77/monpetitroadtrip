@@ -1,30 +1,35 @@
 import Accommodation from '../models/Accommodation.js';
-import Stage from '../models/Stage.js';
+import Step from '../models/Step.js';
 import Roadtrip from '../models/Roadtrip.js';
 import File from '../models/File.js';
 import { getCoordinates } from '../utils/googleMapsUtils.js';
 import { uploadToGCS, deleteFromGCS } from '../utils/fileUtils.js';
 
 // Méthode pour créer un nouvel hébergement pour une étape donnée
-export const createAccommodationForStage = async (req, res) => {
+export const createAccommodationForStep = async (req, res) => {
     try {
         const roadtrip = await Roadtrip.findById(req.params.idRoadtrip);
-        const stage = await Stage.findById(req.params.idStage);
+        const step = await Step.findById(req.params.idStep);
 
         console.log("Roadtrip: ", roadtrip);
-        console.log("Stage", stage);
+        console.log("Step", step);
 
         if (!roadtrip) {
             return res.status(404).json({ msg: 'Roadtrip not found' });
         }
 
-        if (!stage) {
-            return res.status(404).json({ msg: 'Stage not found' });
+        if (!step) {
+            return res.status(404).json({ msg: 'Step not found' });
         }
 
         // Vérifier si l'utilisateur est le propriétaire du roadtrip et de l'étape
-        if (roadtrip.userId.toString() !== req.user.id || stage.userId.toString() !== req.user.id) {
+        if (roadtrip.userId.toString() !== req.user.id || step.userId.toString() !== req.user.id) {
             return res.status(401).json({ msg: 'User not authorized' });
+        }
+
+        // Vérifier si le type de l'étape est 'Stop' et retourner une erreur si des accommodations existent
+        if (step.type === 'Stop') {
+            return res.status(400).json({ msg: "Erreur lors de la création du Step : un step de type 'Stop' ne peut pas avoir d'hébergements" });
         }
 
         // Extraire les données JSON du champ 'data' si elles existent
@@ -67,7 +72,7 @@ export const createAccommodationForStage = async (req, res) => {
             nights: data.nights,
             price: data.price,
             notes: data.notes,
-            stageId: req.params.idStage,
+            stepId: req.params.idStep,
             userId: req.user.id
         });
 
@@ -105,8 +110,8 @@ export const createAccommodationForStage = async (req, res) => {
         }
 
         // Ajouter l'hébergement à la liste des hébergements de l'étape
-        stage.accommodations.push(accommodation._id);
-        await stage.save();
+        step.accommodations.push(accommodation._id);
+        await step.save();
 
         await accommodation.save();
         res.status(201).json(accommodation);
@@ -330,10 +335,41 @@ export const deleteAccommodation = async (req, res) => {
         }
 
         // Supprimer l'hébergement de la liste des hébergements de l'étape
-        if (accommodation.stageId) {
-            const stage = await Stage.findById(accommodation.stageId);
-            stage.accommodations = stage.accommodations.filter(accommodationId => accommodationId.toString() !== req.params.idAccommodation);
-            await stage.save();
+        if (accommodation.stepId) {
+            const step = await Step.findById(accommodation.stepId);
+            step.accommodations = step.accommodations.filter(accommodationId => accommodationId.toString() !== req.params.idAccommodation);
+            await step.save();
+        }
+
+        // Supprimer les fichiers de Google Cloud Storage
+        if (accommodation.thumbnail) {
+            const thumbnailFile = await File.findById(accommodation.thumbnail);
+            if (thumbnailFile) {
+                await deleteFromGCS(thumbnailFile.url);
+                await thumbnailFile.deleteOne();
+            }
+        }
+
+        if (accommodation.photos && accommodation.photos.length > 0) {
+            await Promise.all(accommodation.photos.map(async (photoId) => {
+                const photoFile = await File.findById(photoId);
+                if (photoFile) {
+                    await deleteFromGCS(photoFile.url);
+                    await photoFile.deleteOne();
+                }
+            })
+            );
+        }
+
+        if (accommodation.documents && accommodation.documents.length > 0) {
+            await Promise.all(accommodation.documents.map(async (documentId) => {
+                const documentFile = await File.findById(documentId);
+                if (documentFile) {
+                    await deleteFromGCS(documentFile.url);
+                    await documentFile.deleteOne();
+                }
+            })
+            );
         }
 
         // Supprimer l'hébergement

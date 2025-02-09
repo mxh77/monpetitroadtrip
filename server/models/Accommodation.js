@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 export const AccommodationSchema = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    stageId: { type: Schema.Types.ObjectId, ref: 'Stage', required: true },
+    stepId: { type: Schema.Types.ObjectId, ref: 'Step', required: true },
     name: { type: String, required: true },
     address: { type: String, default: '' },
     latitude: { type: Number, default: 0 },
